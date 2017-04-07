@@ -1,1 +1,6 @@
+htmlmin
+dateparser
+delorean
+bs4
+requests
 beaker

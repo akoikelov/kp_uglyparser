@@ -3,7 +3,7 @@ import re
 import logging
 import dateparser
 import pydash
-from ..utils.get_page import GetPage
+from ..utils.get_page import get_page, LinkGP
 
 awards_list = [
     {
@@ -155,8 +155,9 @@ class MainPageParser(object):
         self.rating = None
         self.ratingimdb = None
         self.awards = {}
-        # start parse
-        self.parse()
+
+        self.cachedir = None
+        self.cachetime = None
 
     @property
     def full(self):
@@ -185,13 +186,17 @@ class MainPageParser(object):
             'awards': self.awards
         }
 
-    def parse(self):
-        main_page_req = GetPage(self.src, 'main_page')
+    def start(self):
+        # start parse
+        self.parse()
 
-        if main_page_req.content:
+    def parse(self):
+        main_page_linkgp = get_page(LinkGP(self.src), cachedir=self.cachedir, cachetime=self.cachetime)
+
+        if main_page_linkgp.content:
             strainer = SoupStrainer("div", id="content_block")
             self.page = BeautifulSoup(
-                main_page_req.content, 'lxml', parse_only=strainer)
+                main_page_linkgp.content, 'lxml', parse_only=strainer)
             self.parse_by_steps()
         else:
             logging.error(
@@ -397,12 +402,11 @@ class MainPageParser(object):
                 self.trivia.append(trivia.span.text)
 
     def get_recommendations(self):
-        recommendations_page_req = GetPage(
-            self.src + 'like/', 'main_recommendations')
-        if recommendations_page_req.content:
+        recommendations_page_linkgp = get_page(LinkGP(self.src + 'like/'), cachedir=self.cachedir, cachetime=self.cachetime)
+        if recommendations_page_linkgp.content:
             strainer = SoupStrainer('div', class_='block_left_pad')
             recommendations_soup = BeautifulSoup(
-                recommendations_page_req.content, 'lxml', parse_only=strainer)
+                recommendations_page_linkgp.content, 'lxml', parse_only=strainer)
             if recommendations_soup:
                 recommendations_trs = recommendations_soup.find_all(
                     'tr', class_='_NO_HIGHLIGHT_')
@@ -418,11 +422,12 @@ class MainPageParser(object):
                             })
 
     def get_awards(self):
-        awards_page_req = GetPage(self.src + 'awards/', 'main_awards')
+        awards_page_linkgp = get_page(LinkGP(self.src + 'awards/'), cachedir=self.cachedir, cachetime=self.cachetime)
+
         strainer = SoupStrainer('div', class_='block_left')
-        if awards_page_req.content:
+        if awards_page_linkgp.content:
             awards_soup = BeautifulSoup(
-                awards_page_req.content, 'lxml', parse_only=strainer)  # type: BeautifulSoup
+                awards_page_linkgp.content, 'lxml', parse_only=strainer)  # type: BeautifulSoup
             link_list = awards_soup.find_all("li", class_="trivia")  # type: BeautifulSoup.ResultSet
 
             for link in link_list:

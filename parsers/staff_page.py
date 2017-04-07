@@ -1,6 +1,6 @@
 from typing import List
 from bs4 import BeautifulSoup, SoupStrainer, Tag
-from ..utils.get_page import GetPage
+from ..utils.get_page import get_page, LinkGP
 
 
 class StaffPageParser:
@@ -23,7 +23,8 @@ class StaffPageParser:
 
     def __init__(self, page_url):
         self._url = page_url
-        self.parse()
+        self.cachedir = None
+        self.cachetime = None
 
     @property
     def full(self):
@@ -41,13 +42,16 @@ class StaffPageParser:
             'editors': self.editors
         }
 
+    def start(self):
+        self.parse()
+
     def parse(self):
         self.get_page()
         self.create_soup()
         self.walk()
 
     def get_page(self):
-        request = GetPage(self._url, 'main_kinopoisk')
+        request = get_page(LinkGP(self._url), cachedir=self.cachedir, cachetime=self.cachetime)
         if request:
             self._page_content = request.content
 

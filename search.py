@@ -1,6 +1,5 @@
 import requests
 import json
-from typing import List
 from .utils.memoize import memoize_fs
 
 
@@ -18,6 +17,8 @@ def _format_item(result_item):
 def search_movie(q, cachedir=False, cachetime=3600 * 24):
     """
     find movie on kinopoisk.ru
+    :param cachetime: 
+    :param cachedir: 
     :param q:
     :return:
     """

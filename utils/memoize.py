@@ -32,14 +32,15 @@ def memoize_fs(cachedir, func_name, lifetime):
                     else:
                         result = pickle.load(file)
             else:
-                with open(filepath, 'wb') as file:
-                    result = func(*args, **kwargs)
-                    try:
-                        # write die line on cache
-                        file.write(bytes(die_line, encoding='utf-8'))
-                        pickle.dump(result, file)
-                    except RecursionError as error:
-                        print("recursion limit")
+                result = func(*args, **kwargs)
+                if result:
+                    with open(filepath, 'wb') as file:
+                        try:
+                            # write die line on cache
+                            file.write(bytes(die_line, encoding='utf-8'))
+                            pickle.dump(result, file)
+                        except RecursionError:
+                            print("recursion limit")
             return result
 
         return _memoize_fs

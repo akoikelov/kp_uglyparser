@@ -1,17 +1,11 @@
-import json
 import re
-import threading
 import math
 
-import time
-from typing import List
+from typing import List, Union
 
 from bs4 import BeautifulSoup, SoupStrainer
-import logging
 import dateparser
-import requests
-from ..utils.get_page import GetPage
-from ..utils.get_page_parallel import get_pages
+from ..utils.get_page import get_pages, LinkGP, get_page
 
 
 class ReviewsPageParser:
@@ -36,6 +30,10 @@ class ReviewsPageParser:
 
     def __init__(self, film_id):
         self.film_id = film_id
+        self.cachedir = None
+        self.cachetime = None
+
+    def start(self):
         self.parse()
 
     def parse(self):
@@ -46,16 +44,16 @@ class ReviewsPageParser:
         self.read_soups()
 
     def get_another_pages(self):
-        links = self.generate_links(self.film_id, self._page_count)
-        res_list = get_pages(links)
-        if res_list:
-            for res in res_list:
+        linksgp = self.generate_links(self.film_id, self._page_count)
+        linksgp = get_pages(linksgp, cachedir=self.cachedir, cachetime=self.cachetime)
+        if linksgp:
+            for linkgp in linksgp:
                 self.blocks.append(
-                    self.generate_block_soup_from_str(res.content))
+                    self.generate_block_soup_from_str(linkgp.content))
 
     @staticmethod
     def generate_links(film_id, page_count):
-        return ["https://www.kinopoisk.ru/film/{0}/ord/rating/perpage/200/page/{1}".format(film_id, page + 1) for page in range(page_count)][1:]
+        return [LinkGP("https://www.kinopoisk.ru/film/{0}/ord/rating/perpage/200/page/{1}".format(film_id, page + 1)) for page in range(page_count)][1:]
 
     def get_first_page(self):
         """Get block from first page and detect count of pages"""
@@ -72,11 +70,10 @@ class ReviewsPageParser:
                 reviews_count = int(match.group('full_count'))
                 return math.ceil(reviews_count / 200)
 
-    def get_reviews_block_soup(self, page: int) -> BeautifulSoup:
+    def get_reviews_block_soup(self, page: int) -> Union[BeautifulSoup, bool]:
         """TODO"""
-        request = GetPage(self.generate_url(
-            page), 'main_kinopoisk')  # type: GetPage
-        page_soup = self.generate_block_soup_from_str(request.content)
+        rewiews_linkgp = get_page(LinkGP(self.generate_url(page)), cachedir=self.cachedir, cachetime=self.cachetime)
+        page_soup = self.generate_block_soup_from_str(rewiews_linkgp.content)
         # if this block is empty?
         if page_soup.ul:
             return page_soup

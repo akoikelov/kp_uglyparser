@@ -1,12 +1,9 @@
 import logging
-from .settings import KINOPOISK_LINK
 from .parsers.image_page import ImagePageParser
 from .parsers.trailers_page import TrailersPageParser
 from .parsers.main_page import MainPageParser
 from .parsers.reviews_page import ReviewsPageParser
 from .parsers.staff_page import StaffPageParser
-
-from .utils.memoize import memoize_fs
 
 
 class Film(object):
@@ -15,7 +12,7 @@ class Film(object):
     IF you wonna to cache results for duplicated arguments you mau to use the cache
     """
 
-    def __init__(self, film_id=0, cachedir=None, cachetime=3600 * 48):
+    def __init__(self, film_id=0, cachedir=None, cachetime=3600 * 24 * 5):
         # set defaults
         self.id = film_id
         self.pages = None
@@ -101,77 +98,77 @@ class Film(object):
     # start parser func
     def get_content(self, page='main_page'):
         if page in self.pages.keys():
-                self.pages[page]['parser'](self.pages[page]['src'])
+            self.pages[page]['parser'](self.pages[page]['src'])
         else:
             logging.error(
                 "Undefinded page: '{}'; Select from ['main_page', 'posters_page', 'stills_page']".format(page))
 
     def parse_main_page(self, src):
-        @memoize_fs(self.cachedir, "parse_main_page", self.cachetime)
-        def parse(*args, **kwargs):
-            parser = MainPageParser(*args, **kwargs)
-            return parser.full
-        self.main_page = parse(src, self.id)
+        parser = MainPageParser(src, self.id)
+        parser.cachedir = self.cachedir
+        parser.cachetime = self.cachetime
+        parser.start()
+        self.main_page = parser.full
 
     def parse_posters_page(self, src):
-        @memoize_fs(self.cachedir, "parse_posters_page", self.cachetime)
-        def parse(*args, **kwargs):
-            parser = ImagePageParser(*args, **kwargs)
-            return parser.full
-        self.posters = parse(src, get_main_poster=self.id)
+        parser = ImagePageParser(src)
+        parser.cachedir = self.cachedir
+        parser.cachetime = self.cachetime
+        parser.start(self.id)
+        self.posters = parser.full
 
     def parse_stills_page(self, src):
-        @memoize_fs(self.cachedir, "parse_stills_page", self.cachetime)
-        def parse(*args, **kwargs):
-            parser = ImagePageParser(*args, **kwargs)
-            return parser.full
-        self.stills = parse(src)
+        parser = ImagePageParser(src)
+        parser.cachedir = self.cachedir
+        parser.cachetime = self.cachetime
+        parser.start()
+        self.stills = parser.full
 
     def parse_fanart_page(self, src):
-        @memoize_fs(self.cachedir, "parse_fanart_page", self.cachetime)
-        def parse(*args, **kwargs):
-            parser = ImagePageParser(*args, **kwargs)
-            return parser.full
-        self.fanart = parse(src)
+        parser = ImagePageParser(src)
+        parser.cachedir = self.cachedir
+        parser.cachetime = self.cachetime
+        parser.start()
+        self.fanart = parser.full
 
     def parse_covers_page(self, src):
-        @memoize_fs(self.cachedir, "parse_covers_page", self.cachetime)
-        def parse(*args, **kwargs):
-            parser = ImagePageParser(*args, **kwargs)
-            return parser.full
-        self.covers = parse(src)
+        parser = ImagePageParser(src)
+        parser.cachedir = self.cachedir
+        parser.cachetime = self.cachetime
+        parser.start()
+        self.covers = parser.full
 
     def parse_wall_page(self, src):
-        @memoize_fs(self.cachedir, "parse_wall_page", self.cachetime)
-        def parse(*args, **kwargs):
-            parser = ImagePageParser(*args, **kwargs)
-            return parser.full
-        self.wall = parse(src)
+        parser = ImagePageParser(src)
+        parser.cachedir = self.cachedir
+        parser.cachetime = self.cachetime
+        parser.start()
+        self.wall = parser.full
 
     def parse_concept_page(self, src):
-        @memoize_fs(self.cachedir, "parse_concept_page", self.cachetime)
-        def parse(*args, **kwargs):
-            parser = ImagePageParser(*args, **kwargs)
-            return parser.full
-        self.concept = parse(src)
+        parser = ImagePageParser(src)
+        parser.cachedir = self.cachedir
+        parser.cachetime = self.cachetime
+        parser.start()
+        self.concept = parser.full
 
     def parse_trailers_page(self, src):
-        @memoize_fs(self.cachedir, "parse_trailers_page", self.cachetime)
-        def parse(*args, **kwargs):
-            parser = TrailersPageParser(*args, **kwargs)
-            return parser.full
-        self.trailers = parse(src, self.id)
+        parser = TrailersPageParser(src, self.id)
+        parser.cachedir = self.cachedir
+        parser.cachetime = self.cachetime
+        parser.start()
+        self.trailers = parser.full
 
     def parse_reviews_page(self, src: str):
-        @memoize_fs(self.cachedir, "parse_reviews_page", self.cachetime)
-        def parse(*args, **kwargs):
-            parser = ReviewsPageParser(*args, **kwargs)
-            return parser.full
-        self.reviews = parse(self.id)
+        parser = ReviewsPageParser(self.id)
+        parser.cachedir = self.cachedir
+        parser.cachetime = self.cachetime
+        parser.start()
+        self.reviews = parser.full
 
     def parse_staff_page(self, src: str):
-        @memoize_fs(self.cachedir, "parse_staff_page", self.cachetime)
-        def parse(*args, **kwargs):
-            parser = StaffPageParser(*args, **kwargs)
-            return parser.full
-        self.staff = parse(src)
+        parser = StaffPageParser(src)
+        parser.cachedir = self.cachedir
+        parser.cachetime = self.cachetime
+        parser.start()
+        self.staff = parser.full

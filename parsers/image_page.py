@@ -1,29 +1,34 @@
 import re
 from typing import Union, List
-from ..utils.get_page_parallel import get_pages
-from ..utils.get_page import GetPage
+from ..utils.get_page import get_page, get_pages, LinkGP
 from bs4 import BeautifulSoup, SoupStrainer
 import logging
-import pydash
 from ..settings import LINK_TO_MAIN_PAGE, KINOPOISK_LINK
+
+_cachedir = None
+_cachetime = None
 
 
 class ImagePageParser:
     """
     Get images for movie from images page; Result will be in field "pictures"
     """
-    
-    def __init__(self, src: str, get_main_poster: Union[bool, int] = False):
+
+    def __init__(self, src: str):
         """
         Init instance of ImagePageParser
-        :param get_main_poster: "false" or id of movie on kinopoisk.ru
         :param src: Link to page with images (Example: https://www.kinopoisk.ru/film/[film_id]/stills/)
         """
+        global _cachedir, _cachetime
         self.pictures = []  # future result
         self.pictures_pages = []  # type: List[BeautifulSoup]
         self.src = src
-        # start getting
+        self.cachedir = None
+        self.cachetime = None
+
+    def start(self, get_main_poster: Union[bool, int] = False):
         self.parse()
+
         if type(get_main_poster) is int:
             self.get_poster_from_main_page(get_main_poster)
 
@@ -34,18 +39,17 @@ class ImagePageParser:
         # get pictures page
         strainer = SoupStrainer('div', attrs={'class': 'block_left'})
         logging.debug("Start getting pictures_page")
-        pictures_page_req = GetPage(
-            self.src + "page/{0}/".format(page), 'image_page')
+        pictures_page_linkgp = get_page(LinkGP(self.src + "page/{0}/".format(page)), self.cachedir, self.cachetime)
         logging.debug("Finish getting pictures_page")
-        if pictures_page_req.status_code == 200:
-            if ImagePageParser.test_on_404(pictures_page_req.content):
+        if pictures_page_linkgp.status_code == 200:
+            if ImagePageParser.test_on_404(pictures_page_linkgp.content):
                 # save page(BeautifulSoup object) in self.pictures_pages
                 self.pictures_pages.append(BeautifulSoup(
-                    pictures_page_req.content, 'lxml', parse_only=strainer))
+                    pictures_page_linkgp.content, 'lxml', parse_only=strainer))
                 self.test_page_count(page)
         else:
             logging.info("Cannot get pictures page; Status code: {0} ; Link: {1}".format(
-                pictures_page_req.status_code, self.src))
+                pictures_page_linkgp.status_code, self.src))
 
     @property
     def full(self):
@@ -78,7 +82,7 @@ class ImagePageParser:
             pages_list = pages_block.find_all("li", class_='')
             page_count = len(pages_list)
         if len(self.pictures_pages) < page_count:
-                self.parse(prev_page + 1)
+            self.parse(prev_page + 1)
         else:
             logging.info(
                 "List of main pages is full; Total count: {0}".format(prev_page))
@@ -115,25 +119,23 @@ class ImagePageParser:
             """
             return "thumbnail" in pic and "sm_" not in pic['thumbnail']
 
-        def append_full_size_image_to_pic(req):
+        def append_full_size_image_to_pic(linkgp):
             """
             callback function get req object and another arguments that
             """
             image_page = BeautifulSoup(
-                req.content, 'lxml', parse_only=strainer)
+                linkgp.content, 'lxml', parse_only=strainer)
             if image_page:
                 img = image_page.find('img', id='image')
-                try:
-                    pass
-                    # pic['full'] = "http:" + img.attrs['src']
-                except:
-                    pass
 
         # get images page for pics which don't have link to the thumbnail like sm_id.jpg
         # and execute callback function append_full_size_to_pic for every result
         pics_for_getting = list(filter(filter_without_sm_pictures, self.pictures))
-        pages_list=[{'url': pic['href'], 'callback_arguments': [pic, ]} for pic in pics_for_getting]
-        get_pages(pages_list, callback=append_full_size_image_to_pic)
+        if len(pics_for_getting) > 0:
+            get_pages(
+                [LinkGP(pic['href'], ) for pic in pics_for_getting],
+                cachedir=self.cachedir, cachetime=self.cachetime, callback=append_full_size_image_to_pic
+            )
 
         for pic in self.pictures:
             if pic not in pics_for_getting:
@@ -147,10 +149,10 @@ class ImagePageParser:
     def get_poster_from_main_page(self, movie_id: int):
         strainer = SoupStrainer("div", class_="film-img-box")
         main_page_link = LINK_TO_MAIN_PAGE.format(movie_id)
-        main_page_req = GetPage(main_page_link, 'main_page')
-        if main_page_req.status_code == 200:
+        linkgp_main_page = get_page(LinkGP(main_page_link), cachedir=self.cachedir, cachetime=self.cachetime)
+        if linkgp_main_page.status_code == 200:
             main_page = BeautifulSoup(
-                main_page_req.content, 'lxml', parse_only=strainer)
+                linkgp_main_page.content, 'lxml', parse_only=strainer)
             if main_page:
                 img = main_page.find('img')  # type: BeautifulSoup
                 if img and img.parent and 'onclick' in img.parent.attrs:

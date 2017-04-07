@@ -5,7 +5,7 @@ import htmlmin
 import re
 import logging
 import dateparser
-from ..utils.get_page import GetPage
+from ..utils.get_page import get_page, LinkGP
 from ..settings import LINK_TO_MAIN_PAGE
 
 
@@ -22,29 +22,31 @@ class TrailersPageParser(object):
         """
         # Set defaults
         self.src = src
+        self.movie_id = movie_id
         self.trailers = []
-        self.trailers_page = None
-        self.trailers_soup = None
         self.trailers_blocks = []  # beutiul soups
-        # start parsing
+
+        self.cachedir = None
+        self.cachetime = None
+
+    def start(self):
         self.parse()
-        if movie_id:
-            self.movie_id = movie_id
+        if self.movie_id:
             self.get_main_trailer()
 
     def parse(self):
         reqex_between_comments = r"<!-- ролик -->([^≠]+?)<!-- /ролик -->"
         strainer = SoupStrainer("div", class_='block_left')
-        self.trailers_page = GetPage(self.src, 'trailers_page')
-        if self.trailers_page.content:
-            self.trailers_soup = BeautifulSoup(self.trailers_page.content, 'lxml', parse_only=strainer)
-            min_text = htmlmin.minify(self.trailers_soup.prettify(), remove_empty_space=True)
+        trailers_page_linkgp = get_page(LinkGP(self.src), cachedir=self.cachedir, cachetime=self.cachetime)
+        if trailers_page_linkgp.content:
+            trailers_soup = BeautifulSoup(trailers_page_linkgp.content, 'lxml', parse_only=strainer)
+            min_text = htmlmin.minify(trailers_soup.prettify(), remove_empty_space=True)
             trailer_blocks = re.findall(reqex_between_comments, min_text)[1:]
             for trailer_block in trailer_blocks:
                 self.trailers_blocks.append(BeautifulSoup(trailer_block, 'lxml'))
             self.parse_trailers_blocks()
         else:
-            logging.error("Cannot get trailers page; Status code: {0}".format(self.trailers_page.status_code))
+            logging.error("Cannot get trailers page; Status code: {0}".format(trailers_page_linkgp.status_code))
 
     @property
     def full(self):
@@ -64,7 +66,6 @@ class TrailersPageParser(object):
             if runtime_tds:
                 runtime = runtime_tds[1].text if len(runtime_tds) > 2 else None
             # public_date
-            public_date = None
             public_date = title.next_sibling.find_all("td")[-1]
             # noinspection PyUnusedLocal
             flag = (trailer.find_all('div', class_='flag') or None)
@@ -144,7 +145,7 @@ class TrailersPageParser(object):
             return None
 
     @staticmethod
-    def get_mktime_from_str(public_date: str) -> int:
+    def get_mktime_from_str(public_date: str) -> Union[int, None]:
         """
         Transform " – 20 april 2015" to Unix time
         :param public_date:
@@ -177,7 +178,7 @@ class TrailersPageParser(object):
         pass
 
     def get_main_trailer(self):
-        page = GetPage(LINK_TO_MAIN_PAGE.format(self.movie_id), 'main_kinopoisk')  # type: GetPage
+        page = get_page(LinkGP(LINK_TO_MAIN_PAGE.format(self.movie_id)), cachedir=self.cachedir, cachetime=self.cachetime)
         if page.status_code == 200 and page.content:
             soup = BeautifulSoup(page.content, 'lxml')  # type: BeautifulSoup
             if soup:
