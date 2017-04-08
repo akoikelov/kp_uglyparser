@@ -1,5 +1,5 @@
 # links
-KINOPOISK_LINK = "https://kinopoisk.ru"
+KINOPOISK_LINK = "https://www.kinopoisk.ru"
 LINK_TO_MAIN_PAGE = "https://www.kinopoisk.ru/film/{0}/"
 LINK_TO_POSTERS_PAGE = "https://www.kinopoisk.ru/film/{0}/posters/"
 LINK_TO_STILLS_PAGE = "https://www.kinopoisk.ru/film/{0}/stills/"

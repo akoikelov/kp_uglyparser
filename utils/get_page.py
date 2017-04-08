@@ -4,40 +4,26 @@ import time
 from typing import Union, List, Callable
 
 import os
-import logging
 import requests
 import random
+import logging
+from grab import Grab
+from grab.response import Response as GResponse
 from fake_useragent import UserAgent
 from .memoize import memoize_fs, check_in_cache
 
 proxies = []
-sessions = []
+grabs = []
 
 ua = UserAgent()
 FUNC_NAME = 'get_page'
 
 
-def get_session(proxy=None):
-    session = requests.Session()
-    session.headers = {
-        'Accept-Language': 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
-        'Accept-Encoding': 'gzip, deflate, sdch, br',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'User-Agent': getattr(ua, random.choice(['chrome', 'opera', 'firefox'])),
-        'Accept-Charset': 'utf-8,windows-1251;q=0.7,*;q=0.7',
-        'Host': 'www.kinopoisk.ru'
-    }
+def get_grab(proxy=None):
+    g = Grab()
     if proxy:
-        session.proxies = {
-            'http': proxy,
-            'https': proxy
-        }
-
-    # noinspection PyUnresolvedReferences
-    adapter = requests.adapters.HTTPAdapter(
-        pool_connections=1000, pool_maxsize=1000)
-    session.mount('https://', adapter)
-    return session
+        g.setup(proxy=proxy, proxy_type='socks5')
+    return g
 
 
 def check_proxy(checked_proxy):
@@ -56,16 +42,16 @@ def check_proxy(checked_proxy):
 
 
 if os.environ.get("PROXIES"):
-    proxies_str = os.environ.get("PROXIES")
+    proxies_str = os.environ.get("PROXIES_S")
     proxies = proxies_str.split(';')
     for proxy in proxies:
-        if check_proxy(proxy):
-            sessions.append(get_session(proxy))
-sessions.append(get_session())
+        grabs.append(get_grab(proxy))
+grabs.append(get_grab())
 
 
-def get_randsession():
-    return random.choice(sessions)
+# noinspection SpellCheckingInspection
+def get_randgrab():
+    return random.choice(grabs)
 
 
 class LinkGP:
@@ -82,10 +68,10 @@ class LinkGP:
         self.content = None
         self.proxy = None
 
-    def set_req(self, req: Union[bool, requests.Response]):
+    def set_req(self, req: Union[bool, GResponse]):
         self.req = req
-        self.status_code = req.status_code
-        self.content = req.content
+        self.status_code = req.code
+        self.content = req.body
 
 
 def get_page(link: LinkGP, cachedir: str, cachetime: int) -> LinkGP:
@@ -97,17 +83,17 @@ def get_page(link: LinkGP, cachedir: str, cachetime: int) -> LinkGP:
     :param cachetime: 
     :return: 
     """
-    session = get_randsession()
-    link.proxy = session.proxies
+    g = get_randgrab()
+    link.proxy = g.config['proxy']
     if cachedir and cachetime:
         @memoize_fs(cachedir, FUNC_NAME, cachetime)
-        def req_mem(url) -> Union[bool, requests.Response]:
-            req = session.get(url)
-            if req.status_code == 200:
-                if 'showcaptcha' not in req.url:
-                    return req
+        def req_mem(url) -> Union[bool, GResponse]:
+            res = g.go(url)
+            if res.code == 200:
+                if 'showcaptcha' not in res.url and 'DOCTYPE' in res.body[0:20].decode():
+                    return res
                 else:
-                    logging.error("kinopoisk want your captcha; Proxy: {}".format(session.proxies))
+                    logging.error("kinopoisk want your captcha; Proxy: {}".format(link.proxy))
                     return False
             else:
                 return False
@@ -116,7 +102,7 @@ def get_page(link: LinkGP, cachedir: str, cachetime: int) -> LinkGP:
         if response:
             link.set_req(req_mem(link.url))
     else:
-        link.set_req(session.get(link.url))
+        link.set_req(g.go(link.url))
     return link
 
 
@@ -134,7 +120,7 @@ def mkreq(link: LinkGP, ready_links_list: List[LinkGP], cachedir, cachetime):
 
 
 # noinspection PyTypeChecker
-def get_pages(page_links: Union[List[LinkGP], List[str]], sleep=1, *, callback: Callable = None, cachedir, cachetime) -> List[LinkGP]:
+def get_pages(page_links: Union[List[LinkGP], List[str]], sleep=3, *, callback: Callable = None, cachedir, cachetime) -> List[LinkGP]:
     """
     Get pages in threads
     :param cachetime:

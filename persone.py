@@ -55,7 +55,7 @@ class Persone:
         soups = []
         # noinspection PyTypeChecker
         for link in links:
-            link.req.encoding = 'utf-8'
+            # link.req.encoding = 'utf-8'
             if link.status_code == 200:
                 soup = BeautifulSoup(link.content, 'lxml', parse_only=strainer, from_encoding='utf-8')
                 soup.person_id = link.additional['id']

@@ -26,7 +26,7 @@ class ReviewsPageParser:
         return self.reviews
 
     def generate_url(self, page: int = 0):
-        return "https://www.kinopoisk.ru/film/{0}/ord/rating/perpage/200/page/{1}".format(self.film_id, page)
+        return "https://www.kinopoisk.ru/film/{0}/ord/rating/perpage/200/page/{1}/".format(self.film_id, page)
 
     def __init__(self, film_id):
         self.film_id = film_id
