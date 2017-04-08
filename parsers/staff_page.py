@@ -4,25 +4,24 @@ from ..utils.get_page import get_page, LinkGP
 
 
 class StaffPageParser:
-    _url = ""
-    _page_content = ""
-    _page_soup = ""
-    _current_role = None
-
-    actors = []
-    directors = []
-    producers = []
-    voice_directors = []
-    translators = []
-    voices = []
-    writers = []
-    operators = []
-    composers = []
-    designs = []
-    editors = []
-
     def __init__(self, page_url):
         self._url = page_url
+        self._page_content = ""
+        self._page_soup = ""
+        self._current_role = None
+
+        self.actors = []
+        self.directors = []
+        self.producers = []
+        self.voice_directors = []
+        self.translators = []
+        self.voices = []
+        self.writers = []
+        self.operators = []
+        self.composers = []
+        self.designs = []
+        self.editors = []
+
         self.cachedir = None
         self.cachetime = None
 

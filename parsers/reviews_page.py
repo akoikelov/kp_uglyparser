@@ -9,29 +9,21 @@ from ..utils.get_page import get_pages, LinkGP, get_page
 
 
 class ReviewsPageParser:
-    """
-    Parser of reviews for film
-    WARNING! This parser work with plus.kinopoisk.ru
-    """
-    reviews = []
-    film_id = None
-    blocks = []  # type: List[BeautifulSoup]
-    _page = 1
-    _page_count = None
-    _links = []
-    _reviews = []
+    def __init__(self, film_id):
+        self.reviews = []
+        self.blocks = []  # type: List[BeautifulSoup]
+        self._page = 1
+        self._page_count = None
+        self._links = []
+        self._reviews = []
+
+        self.film_id = film_id
+        self.cachedir = None
+        self.cachetime = None
 
     @property
     def full(self):
         return self.reviews
-
-    def generate_url(self, page: int = 0):
-        return "https://www.kinopoisk.ru/film/{0}/ord/rating/perpage/200/page/{1}/".format(self.film_id, page)
-
-    def __init__(self, film_id):
-        self.film_id = film_id
-        self.cachedir = None
-        self.cachetime = None
 
     def start(self):
         self.parse()
@@ -42,6 +34,9 @@ class ReviewsPageParser:
             self.get_another_pages()
         self.get_subsoup_from_block()
         self.read_soups()
+
+    def generate_url(self, page: int = 0):
+        return "https://www.kinopoisk.ru/film/{0}/ord/rating/perpage/200/page/{1}/".format(self.film_id, page)
 
     def get_another_pages(self):
         linksgp = self.generate_links(self.film_id, self._page_count)
