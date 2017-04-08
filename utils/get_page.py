@@ -7,15 +7,26 @@ import os
 import logging
 import requests
 import random
-from .memoize import memoize_fs
+from fake_useragent import UserAgent
+from .memoize import memoize_fs, check_in_cache
 
 proxies = []
 sessions = []
 
+ua = UserAgent()
+FUNC_NAME = 'get_page'
+
 
 def get_session(proxy=None):
     session = requests.Session()
-
+    session.headers = {
+        'Accept-Language': 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
+        'Accept-Encoding': 'gzip, deflate, sdch, br',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'User-Agent': getattr(ua, random.choice(['chrome', 'opera', 'firefox'])),
+        'Accept-Charset': 'utf-8,windows-1251;q=0.7,*;q=0.7',
+        'Host': 'www.kinopoisk.ru'
+    }
     if proxy:
         session.proxies = {
             'http': proxy,
@@ -54,8 +65,7 @@ sessions.append(get_session())
 
 
 def get_randsession():
-    num = random.randint(1, len(proxies))
-    return sessions[num - 1]
+    return random.choice(sessions)
 
 
 class LinkGP:
@@ -70,21 +80,12 @@ class LinkGP:
         self.req = None
         self.status_code = None
         self.content = None
+        self.proxy = None
 
     def set_req(self, req: Union[bool, requests.Response]):
         self.req = req
         self.status_code = req.status_code
         self.content = req.content
-
-
-__headers = {
-    'Accept-Language': 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
-    'Accept-Encoding': 'gzip, deflate, sdch, br',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36',
-    'Accept-Charset': 'utf-8,windows-1251;q=0.7,*;q=0.7',
-    'Host': 'www.kinopoisk.ru'
-}
 
 
 def get_page(link: LinkGP, cachedir: str, cachetime: int) -> LinkGP:
@@ -97,23 +98,25 @@ def get_page(link: LinkGP, cachedir: str, cachetime: int) -> LinkGP:
     :return: 
     """
     session = get_randsession()
-
+    link.proxy = session.proxies
     if cachedir and cachetime:
-        @memoize_fs(cachedir, 'get_page', cachetime)
+        @memoize_fs(cachedir, FUNC_NAME, cachetime)
         def req_mem(url) -> Union[bool, requests.Response]:
-            req = session.get(url, headers=__headers)
+            req = session.get(url)
             if req.status_code == 200:
                 if 'showcaptcha' not in req.url:
                     return req
                 else:
-                    logging.error("kinopoisk want your capcha")
+                    logging.error("kinopoisk want your captcha; Proxy: {}".format(session.proxies))
                     return False
             else:
                 return False
 
-        link.set_req(req_mem(link.url))
+        response = req_mem(link.url)
+        if response:
+            link.set_req(req_mem(link.url))
     else:
-        link.set_req(session.get(link.url, headers=__headers))
+        link.set_req(session.get(link.url))
     return link
 
 
@@ -131,7 +134,7 @@ def mkreq(link: LinkGP, ready_links_list: List[LinkGP], cachedir, cachetime):
 
 
 # noinspection PyTypeChecker
-def get_pages(page_links: Union[List[LinkGP], List[str]], sleep=0.10, *, callback: Callable = None, cachedir, cachetime) -> List[LinkGP]:
+def get_pages(page_links: Union[List[LinkGP], List[str]], sleep=1, *, callback: Callable = None, cachedir, cachetime) -> List[LinkGP]:
     """
     Get pages in threads
     :param cachetime:
@@ -152,7 +155,8 @@ def get_pages(page_links: Union[List[LinkGP], List[str]], sleep=0.10, *, callbac
 
         threads_list.append(thread)
         thread.start()
-        time.sleep(sleep)
+        if not check_in_cache(cachedir, FUNC_NAME, link.url):
+            time.sleep(sleep)
 
     for thread in threads_list:
         thread.join()
