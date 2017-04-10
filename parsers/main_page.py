@@ -115,7 +115,7 @@ awards_list = [
 ]
 
 
-class MainPageParser(object):
+class MainPageParser():
     """
     Get page of movie
     """
@@ -134,7 +134,7 @@ class MainPageParser(object):
         self.description = None
         self.poster = None
         self.sequels = []
-        self.trivia = []
+        self.trivial_facts = []
         self.recommendations = []
 
         self.year = None
@@ -168,7 +168,7 @@ class MainPageParser(object):
             'poster': self.poster,
             'sequels': self.sequels,
             'recommendations': self.recommendations,
-            'trivia': self.trivia,
+            'trivial_facts': self.trivial_facts,
             'year': self.year,
             'countries': self.countries,
             'slogan': self.slogan,
@@ -399,7 +399,7 @@ class MainPageParser(object):
         if trivia_block:
             trivia_list = trivia_block.find_all('li', class_='trivia')
             for trivia in trivia_list:
-                self.trivia.append(trivia.span.text)
+                self.trivial_facts.append(trivia.span.text)
 
     def get_recommendations(self):
         recommendations_page_linkgp = get_page(LinkGP(self.src + 'like/'), cachedir=self.cachedir, cachetime=self.cachetime)
