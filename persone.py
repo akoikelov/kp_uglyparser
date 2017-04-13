@@ -1,7 +1,9 @@
 import dateparser
+import re
 from delorean import Delorean
 from datetime import datetime
 from bs4 import BeautifulSoup, SoupStrainer
+from .parsers.image_page import ImagePageParser
 import logging
 
 from typing import List
@@ -45,19 +47,18 @@ class Persone:
 
     @staticmethod
     def get_requests(id_list: List) -> List[LinkGP]:
-        links = [LinkGP("{kp_link}/name/{p_id}/".format(p_id=i_d, kp_link=KINOPOISK_LINK), id=i_d) for i_d in id_list]
+        links = [LinkGP("{kp_link}/name/{p_id}/view_info/ok/#trivia".format(p_id=i_d, kp_link=KINOPOISK_LINK), id=i_d) for i_d in id_list]
         return get_pages(links, cachedir=_cachedir, cachetime=_cachetime)
 
     @staticmethod
     def create_soups(links: List[LinkGP]):
         """Create Soups objects from self.reqs"""
-        strainer = SoupStrainer('div', attrs={'id': 'viewPeopleInfoWrapper'})
         soups = []
         # noinspection PyTypeChecker
         for link in links:
             # link.req.encoding = 'utf-8'
             if link.status_code == 200:
-                soup = BeautifulSoup(link.content, 'lxml', parse_only=strainer, from_encoding='utf-8')
+                soup = BeautifulSoup(link.content, 'lxml', from_encoding='utf-8')
                 soup.person_id = link.additional['id']
                 soup.link = link
                 soups.append(soup)
@@ -78,7 +79,11 @@ class Persone:
                 'birthdate': Persone.get_birthdate(soup),
                 'diedate': Persone.get_diedate(soup),
                 'birthplace': Persone.get_birthplace(soup),
+                'growth': Persone.get_growth(soup),
                 'photo': Persone.get_photourl(soup),
+                'photos': Persone.get_photos('{0}/name/{1}/photos/'.format(KINOPOISK_LINK, soup.person_id)),
+                'roles': Persone.get_roles(soup),
+                'trivia': Persone.get_trivia(soup)
             })
         return result
 
@@ -96,6 +101,13 @@ class Persone:
             return nameen.string.strip()
         else:
             return False
+
+    @staticmethod
+    def get_growth(soup: BeautifulSoup):
+        growth_block = soup.find("td", string="рост")
+        if growth_block:
+            growth = growth_block.next_sibling.find("span").text.replace(' м', '')
+            return growth
 
     @staticmethod
     def get_birthdate(soup):
@@ -139,6 +151,49 @@ class Persone:
             return img_link
         else:
             return None
+
+    @staticmethod
+    def get_trivia(soup):
+        _trivias = []
+        trivias = soup.find_all('li', class_="trivia")
+        for trivia in trivias:
+            _trivias.append(trivia.text)
+        return _trivias
+
+    @staticmethod
+    def get_photos(src):
+        parser = ImagePageParser(src)
+        parser.cachedir = _cachedir
+        parser.cachetime = _cachetime
+        parser.start()
+        return parser.full
+
+    @staticmethod
+    def get_roles(soup: BeautifulSoup):
+        roles = {}
+        tables = soup.find_all(class_="personPageItems")
+        for table in tables:
+            current_role = roles[table.attrs['data-work-type']] = []
+            items = table.find_all("div", class_="item")
+            for item in items:
+                """
+                :param item BeautifulSoup
+                """
+                re_year = re.compile(r'\((\d{4})\)')
+                name = item.find("span", class_='name').a.text
+                try:
+                    year = int(re_year.search(name).groups()[0])
+                except AttributeError:
+                    year = None
+                name = re_year.sub('', name)
+                current_role.append({
+                    'name': name,
+                    'year': year,
+                    'rating': item.attrs['data-imdbr'],
+                    'role': item.find("span", class_='role').text,
+                    'id': item.attrs['data-fid']
+                })
+        return roles
 
     def __str__(self):
         return "<Persons>"
