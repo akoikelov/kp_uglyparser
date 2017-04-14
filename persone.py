@@ -82,8 +82,8 @@ class Persone:
                 'growth': Persone.get_growth(soup),
                 'photo': Persone.get_photourl(soup),
                 'photos': Persone.get_photos('{0}/name/{1}/photos/'.format(KINOPOISK_LINK, soup.person_id)),
-                'roles': Persone.get_roles(soup),
-                'trivia': Persone.get_trivia(soup)
+                'filmography': Persone.get_roles(soup),
+                'trivia_facts': Persone.get_trivia(soup)
             })
         return result
 
@@ -107,7 +107,7 @@ class Persone:
         growth_block = soup.find("td", string="рост")
         if growth_block:
             growth = growth_block.next_sibling.find("span").text.replace(' м', '')
-            return growth
+            return float(growth)
 
     @staticmethod
     def get_birthdate(soup):
@@ -116,9 +116,9 @@ class Persone:
             birthdate = birthdate.attrs["birthdate"]  # str year-month-day
             delorean_date = Delorean(datetime.strptime(
                 birthdate, '%Y-%m-%d'), timezone='UTC')
-            return int(delorean_date.epoch)
+            return delorean_date.datetime.isoformat()
         else:
-            return 0
+            return None
 
     @staticmethod
     def get_diedate(soup):
@@ -126,7 +126,7 @@ class Persone:
         if diedate:
             diedate = diedate.next_sibling.find("span").next
             delorean_date = Delorean(dateparser.parse(diedate), timezone='UTC')
-            return int(delorean_date.epoch)
+            return delorean_date.datetime.isoformat()
         else:
             return None
 
