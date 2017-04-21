@@ -5,9 +5,6 @@ from bs4 import BeautifulSoup, SoupStrainer
 import logging
 from ..settings import LINK_TO_MAIN_PAGE, KINOPOISK_LINK
 
-_cachedir = None
-_cachetime = None
-
 
 class ImagePageParser:
     """
@@ -19,7 +16,6 @@ class ImagePageParser:
         Init instance of ImagePageParser
         :param src: Link to page with images (Example: https://www.kinopoisk.ru/film/[film_id]/stills/)
         """
-        global _cachedir, _cachetime
         self.pictures = []  # future result
         self.pictures_pages = []  # type: List[BeautifulSoup]
         self.src = src

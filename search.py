@@ -22,14 +22,16 @@ def search_movie(q, cachedir=False, cachetime=3600 * 24):
     :param q:
     :return:
     """
-    @memoize_fs(cachedir, "search_movie", cachetime)
+    # @memoize_fs(cachedir, "search_movie", cachetime)
     def search(q):
         resp = requests.get('https://suggest-kinopoisk.yandex.net/suggest-kinopoisk?srv=kinopoisk&part={search}'.format(search=q))
         if resp.status_code == 200:
             _json = json.loads(resp.text)
             items = []
             for item in _json[2]:
-                items.append(json.loads(item))
+                one_item = json.loads(item)
+                if one_item['searchObjectType'] != 'PERSON':
+                    items.append(one_item)
             return list(map(_format_item, items))
         else:
             return []

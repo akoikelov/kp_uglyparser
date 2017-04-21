@@ -134,7 +134,7 @@ class MainPageParser():
         self.description = None
         self.poster = None
         self.sequels = []
-        self.trivial_facts = []
+        self.trivia_facts = []
         self.recommendations = []
 
         self.year = None
@@ -168,7 +168,7 @@ class MainPageParser():
             'poster': self.poster,
             'sequels': self.sequels,
             'recommendations': self.recommendations,
-            'trivial_facts': self.trivial_facts,
+            'trivia_facts': self.trivia_facts,
             'year': self.year,
             'countries': self.countries,
             'slogan': self.slogan,
@@ -307,7 +307,7 @@ class MainPageParser():
             date = premiere_world_marker_td.find(
                 string=re.compile(r'\d+\s.+\s\d\d\d\d'))
             if date:
-                self.premiere_world = int(dateparser.parse(date).timestamp())
+                self.premiere_world = dateparser.parse(date).isoformat()
 
     def get_premiere_russia(self):
         premiere_russia_marker_td = self.info_table.find(
@@ -316,7 +316,7 @@ class MainPageParser():
             date = premiere_russia_marker_td.find(
                 string=re.compile(r'\d+\s.+\s\d\d\d\d'))
             if date:
-                self.premiere_russia = int(dateparser.parse(date).timestamp())
+                self.premiere_russia = dateparser.parse(date).isoformat()
 
     # noinspection PyPep8Naming
     def get_premiere_DVD(self):
@@ -326,7 +326,7 @@ class MainPageParser():
             date = premiere_DVD_marker_td.find(
                 string=re.compile(r'\d+\s.+\s\d\d\d\d'))
             if date:
-                self.premiere_DVD = int(dateparser.parse(date).timestamp())
+                self.premiere_DVD = dateparser.parse(date).isoformat()
 
     # noinspection PyPep8Naming
     def get_premiere_BluRay(self):
@@ -336,7 +336,7 @@ class MainPageParser():
             date = premiere_BluRay_marker_td.find(
                 string=re.compile(r'\d+\s.+\s\d\d\d\d'))
             if date:
-                self.premiere_BluRay = int(dateparser.parse(date).timestamp())
+                self.premiere_BluRay = dateparser.parse(date).isoformat()
 
     def get_runtime(self):
         runtime_marker_td = self.info_table.find('td', id='runtime')
@@ -399,7 +399,7 @@ class MainPageParser():
         if trivia_block:
             trivia_list = trivia_block.find_all('li', class_='trivia')
             for trivia in trivia_list:
-                self.trivial_facts.append(trivia.span.text)
+                self.trivia_facts.append(trivia.span.text)
 
     def get_recommendations(self):
         recommendations_page_linkgp = get_page(LinkGP(self.src + 'like/'), cachedir=self.cachedir, cachetime=self.cachetime)

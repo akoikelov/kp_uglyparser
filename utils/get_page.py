@@ -120,7 +120,7 @@ def mkreq(link: LinkGP, ready_links_list: List[LinkGP], cachedir, cachetime):
 
 
 # noinspection PyTypeChecker
-def get_pages(page_links: Union[List[LinkGP], List[str]], sleep=3, *, callback: Callable = None, cachedir, cachetime) -> List[LinkGP]:
+def get_pages(page_links: Union[List[LinkGP], List[str]], sleep=5, *, callback: Callable = None, cachedir, cachetime) -> List[LinkGP]:
     """
     Get pages in threads
     :param cachetime:
