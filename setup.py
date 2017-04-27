@@ -12,6 +12,7 @@ setup(
         'delorean',
         'bs4',
         'requests',
-        'beaker'
+        'beaker',
+        'fake-useragent'
     ]
 )
