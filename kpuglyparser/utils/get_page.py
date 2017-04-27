@@ -40,10 +40,9 @@ def check_proxy(checked_proxy):
         print('Broken proxy:', checked_proxy)
         return False
 
-
-if os.environ.get("PROXIES"):
-    proxies_str = os.environ.get("PROXIES_S")
-    proxies = proxies_str.split(';')
+PROXIES_ENV = os.environ.get("PROXIES")
+if PROXIES_ENV:
+    proxies = PROXIES_ENV.split(';')
     for proxy in proxies:
         grabs.append(get_grab(proxy))
 grabs.append(get_grab())
