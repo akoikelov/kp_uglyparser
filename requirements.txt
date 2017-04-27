@@ -5,3 +5,4 @@ delorean
 bs4
 requests
 beaker
+fake-useragent
