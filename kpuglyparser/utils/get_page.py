@@ -22,7 +22,7 @@ FUNC_NAME = 'get_page'
 def get_grab(proxy=None):
     g = Grab()
     if proxy:
-        g.setup(proxy=proxy, proxy_type='socks5')
+        g.setup(proxy=proxy, proxy_type='socks5', connect_timeout=60, timeout=60)
     return g
 
 

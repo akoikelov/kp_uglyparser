@@ -317,17 +317,20 @@ class MainPageParser():
         if budget_marker_td:
             content_td = budget_marker_td.find_next_sibling('td')
             a = content_td.find('a')
-            self.boxoffice['WORLD'] = a.text
+            if a:
+                self.boxoffice['WORLD'] = a.text
         budget_marker_td = self.info_table.find('td', text='сборы в России')
         if budget_marker_td:
             content_td = budget_marker_td.find_next_sibling('td')
             a = content_td.find('a')
-            self.boxoffice['RU'] = a.text
+            if a:
+                self.boxoffice['RU'] = a.text
         budget_marker_td = self.info_table.find('td', text='сборы в США')
         if budget_marker_td:
             content_td = budget_marker_td.find_next_sibling('td')
             a = content_td.find('a')
-            self.boxoffice['USA'] = a.text
+            if a:
+                self.boxoffice['USA'] = a.text
 
     def get_premiere_world(self):
         premiere_world_marker_td = self.info_table.find(
