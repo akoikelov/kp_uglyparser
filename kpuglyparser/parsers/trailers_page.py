@@ -96,13 +96,15 @@ class TrailersPageParser(object):
         links = []
         for b in b_texts:
             link = b.parent
-            links.append(TrailersPageParser.create_link_dict(TrailersPageParser.quality_detect(b.text),
-                                                             TrailersPageParser.get_mp4_from_url(link.attrs['href'])))
+            if TrailersPageParser.get_mp4_from_url(link.attrs['href']):
+                links.append(TrailersPageParser.create_link_dict(TrailersPageParser.quality_detect(b.text),
+                                                                 TrailersPageParser.get_mp4_from_url(link.attrs['href'])))
         if len(links) == 0:
             a_texts = trailer_block.find_all('a', text=re.compile(r"((.+) качество)"))
             for a in a_texts:
-                links.append(TrailersPageParser.create_link_dict(TrailersPageParser.quality_detect(a.text),
-                                                                 TrailersPageParser.get_mp4_from_url(a.attrs['href'])))
+                if TrailersPageParser.get_mp4_from_url(a.attrs['href']):
+                    links.append(TrailersPageParser.create_link_dict(TrailersPageParser.quality_detect(a.text),
+                                                                     TrailersPageParser.get_mp4_from_url(a.attrs['href'])))
         return links
 
     @staticmethod
