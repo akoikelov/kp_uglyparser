@@ -119,7 +119,7 @@ def mkreq(link: LinkGP, ready_links_list: List[LinkGP], cachedir, cachetime):
 
 
 # noinspection PyTypeChecker
-def get_pages(page_links: Union[List[LinkGP], List[str]], sleep=5, *, callback: Callable = None, cachedir, cachetime) -> List[LinkGP]:
+def get_pages(page_links: Union[List[LinkGP], List[str]], sleep=1, *, callback: Callable = None, cachedir, cachetime) -> List[LinkGP]:
     """
     Get pages in threads
     :param cachetime:
@@ -130,21 +130,24 @@ def get_pages(page_links: Union[List[LinkGP], List[str]], sleep=5, *, callback: 
     :return: list of GetPage
     """
     ready_linksgp = []  # type List[GetPage]
-    threads_list = []
+    # threads_list = []
 
     for link in page_links:
-        if link is str:
-            link = LinkGP(link)
+        new_gp = get_page(link, cachedir=cachedir, cachetime=cachetime)
+        ready_linksgp.append(new_gp)
+        time.sleep(sleep)
+        # if link is str:
+        #     link = LinkGP(link)
+        #
+        # thread = threading.Thread(target=mkreq, args=(link, ready_linksgp, cachedir, cachetime))
+        #
+        # threads_list.append(thread)
+        # thread.start()
+        # if not check_in_cache(cachedir, FUNC_NAME, link.url):
+        #     time.sleep(sleep)
 
-        thread = threading.Thread(target=mkreq, args=(link, ready_linksgp, cachedir, cachetime))
-
-        threads_list.append(thread)
-        thread.start()
-        if not check_in_cache(cachedir, FUNC_NAME, link.url):
-            time.sleep(sleep)
-
-    for thread in threads_list:
-        thread.join()
+    # for thread in threads_list:
+    #     thread.join()
 
     if callback:
         for linkgp in ready_linksgp:

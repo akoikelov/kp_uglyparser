@@ -145,6 +145,11 @@ class MainPageParser():
             'budget': None,
             'currency': None
         }
+        self.boxoffice = {
+            'USA': None,
+            'RU': None,
+            'WORLD': None
+        }
         # premiere
         self.premiere_world = None
         self.premiere_russia = None
@@ -174,6 +179,7 @@ class MainPageParser():
             'slogan': self.slogan,
             'genres': self.genres,
             'budget': self.budget,
+            'boxoffice': self.boxoffice,
             # premiere
             'premiere_world': self.premiere_world,
             'premiere_russia': self.premiere_russia,
@@ -212,6 +218,7 @@ class MainPageParser():
         self.get_slogan()
         self.get_genres()
         self.get_budget()
+        self.get_boxoffice()
         self.get_premiere_world()
         self.get_premiere_russia()
         self.get_premiere_DVD()
@@ -283,6 +290,7 @@ class MainPageParser():
     def get_budget(self):
         budget_marker_td = self.info_table.find('td', text='бюджет')
         if budget_marker_td:
+
             budget_table_row = budget_marker_td.parent
             if 'en' in budget_table_row.attrs['class']:
                 currency = 'USD'
@@ -290,15 +298,36 @@ class MainPageParser():
                 currency = 'RUB'
             else:
                 currency = 'undefined'
+
             budget_td = budget_table_row.find(
-                class_=re.compile(r'(dollar|euro)'))
+                class_=re.compile(r'(dollar|euro|pound)'))
             # if currency is Euro
             if 'euro' in budget_td.attrs['class']:
                 currency = 'EUR'
+            elif 'pound' in budget_td.attrs['class']:
+                currency = 'GBP'
+
             budget = budget_td.find(string=re.compile(r'((\d+(?:\s|))+)'))
             self.budget['budget'] = int(
                 ''.join(x for x in budget if x.isdigit()))
             self.budget['currency'] = currency
+
+    def get_boxoffice(self):
+        budget_marker_td = self.info_table.find('td', text='сборы в мире')
+        if budget_marker_td:
+            content_td = budget_marker_td.find_next_sibling('td')
+            a = content_td.find('a')
+            self.boxoffice['WORLD'] = a.text
+        budget_marker_td = self.info_table.find('td', text='сборы в России')
+        if budget_marker_td:
+            content_td = budget_marker_td.find_next_sibling('td')
+            a = content_td.find('a')
+            self.boxoffice['RU'] = a.text
+        budget_marker_td = self.info_table.find('td', text='сборы в США')
+        if budget_marker_td:
+            content_td = budget_marker_td.find_next_sibling('td')
+            a = content_td.find('a')
+            self.boxoffice['USA'] = a.text
 
     def get_premiere_world(self):
         premiere_world_marker_td = self.info_table.find(
@@ -375,8 +404,12 @@ class MainPageParser():
         poster_block = self.page.find('div', id='photoBlock')
         if poster_block:
             poster_a = poster_block.find('a', class_='popupBigImage')
-            poster_url = re.findall(
-                r'(/images/.+.jpg)', poster_a.attrs['onclick'])[0]
+            if poster_a:
+                poster_url = re.findall(
+                    r'(/images/.+.jpg)', poster_a.attrs['onclick'])[0]
+            else:
+                poster_img = poster_block.find('img')
+                poster_url = poster_img.attrs['src']
             self.poster = "https://www.kinopoisk.ru" + poster_url
 
     # !===PARSE SEQUELS===!

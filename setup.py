@@ -13,6 +13,7 @@ setup(
         'bs4',
         'requests',
         'beaker',
-        'fake-useragent'
+        'fake-useragent',
+        'pydash==3.4.8',
     ]
 )

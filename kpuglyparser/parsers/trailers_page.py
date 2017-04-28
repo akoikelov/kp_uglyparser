@@ -71,7 +71,7 @@ class TrailersPageParser(object):
             flag = (trailer.find_all('div', class_='flag') or None)
             links = TrailersPageParser.links_detect(trailer)
             poster = TrailersPageParser.get_preview(trailer)
-            if poster:
+            if poster and len(links):
                 self.append_in_trailers(title.text, runtime, TrailersPageParser.get_mktime_from_str(public_date.text), links, poster)
 
     @staticmethod
@@ -136,7 +136,7 @@ class TrailersPageParser(object):
         '/getlink.php?id=306903&type=trailer&link=https://file_link.mp4'
         :return: target link to mp4
         """
-        link_regex = r"link=(https?://.+?.(mp4|flv|avi|mov|wmv))"
+        link_regex = r"link=(https?://.+?.(mp4))"
         mp4_link = re.search(link_regex, url)
         if mp4_link and mp4_link.group(1):
             return mp4_link.group(1)
