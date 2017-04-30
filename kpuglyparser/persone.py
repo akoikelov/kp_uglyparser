@@ -83,7 +83,8 @@ class Persone:
                 'photo': Persone.get_photourl(soup),
                 'photos': Persone.get_photos('{0}/name/{1}/photos/'.format(KINOPOISK_LINK, soup.person_id)),
                 'filmography': Persone.get_roles(soup),
-                'trivia_facts': Persone.get_trivia(soup)
+                'trivia_facts': Persone.get_trivia(soup),
+                'spouse': Persone.get_spouse(soup)
             })
         return result
 
@@ -138,6 +139,14 @@ class Persone:
         for place in places:
             birthplace.append(place.text)
         return birthplace
+
+    @staticmethod
+    def get_spouse(soup):
+        td = soup.find('td', class_='female')
+        if td:
+            for br in td.find_all("br"):
+                br.replace_with("\n")
+            return td.text
 
     @staticmethod
     def get_photourl(soup):
