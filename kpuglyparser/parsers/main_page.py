@@ -407,7 +407,7 @@ class MainPageParser():
         poster_block = self.page.find('div', id='photoBlock')
         if poster_block:
             poster_a = poster_block.find('a', class_='popupBigImage')
-            if poster_a:
+            if poster_a and poster_a.attrs.get('onclick', False):
                 poster_url = re.findall(
                     r'(/images/.+.jpg)', poster_a.attrs['onclick'])[0]
             else:
@@ -421,11 +421,15 @@ class MainPageParser():
         if sequel_block:
             sequels = sequel_block.find_all('div', class_='scroll_photo')
             for sequel in sequels:
+                sequel_en = sequel.find('b', class_='en')
+                if sequel_en:
+                    sequel_en = sequel_en.next
                 sequel_link = sequel.find('a')
                 if sequel_link:
                     if sequel_link.attrs['href'] != '#':
                         self.sequels.append({
                             'nameru': sequel_link.attrs['title'],
+                            'nameen': sequel_en or None,
                             'link': "https://kinopoisk.ru" + sequel_link.attrs['href'],
                             'id': int(''.join([x for x in sequel_link.attrs['href'] if x.isdigit()]))
                         })

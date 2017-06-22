@@ -84,7 +84,8 @@ class Persone:
                 'photos': Persone.get_photos('{0}/name/{1}/photos/'.format(KINOPOISK_LINK, soup.person_id)),
                 'filmography': Persone.get_roles(soup),
                 'trivia_facts': Persone.get_trivia(soup),
-                'spouse': Persone.get_spouse(soup)
+                'spouse': Persone.get_spouse(soup),
+                'sex': Persone.get_gender(soup)
             })
         return result
 
@@ -203,6 +204,12 @@ class Persone:
                     'id': item.attrs['data-fid']
                 })
         return roles
+
+    @staticmethod
+    def get_gender(soup: BeautifulSoup):
+        meta = soup.find('meta', attrs={"itemprop": "gender"})
+        if meta:
+            return meta.attrs['content']
 
     def __str__(self):
         return "<Persons>"

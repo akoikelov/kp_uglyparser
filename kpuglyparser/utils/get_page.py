@@ -27,11 +27,13 @@ def get_grab(proxy=None):
 
 
 def check_proxy(checked_proxy):
+
     try:
         requests.get('http://google.com', proxies={
             'http': checked_proxy,
             'https': checked_proxy
         }, timeout=2)
+
         return True
     except requests.ReadTimeout:
         print('Broken proxy:', checked_proxy)
