@@ -3,3 +3,5 @@ uglyparser.iml
 .vscode
 test.py
 cache
+build
+dist

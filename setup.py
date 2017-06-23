@@ -3,7 +3,7 @@ from os.path import join, dirname
 
 setup(
     name='kpuglyparser',
-    version='1.2',
+    version='1.3',
     packages=find_packages(),
     install_requires=[
         'grab',

@@ -7,6 +7,7 @@ import os
 import requests
 import random
 import logging
+import grab
 from grab import Grab
 from grab.response import Response as GResponse
 from fake_useragent import UserAgent
@@ -74,22 +75,30 @@ class LinkGP:
         self.status_code = req.code
         self.content = req.body
 
+def get_from_grab(url, link, ):
+    g = get_randgrab()
+    try:
+        res = g.go(url)
+        return res
+    except grab.error.GrabConnectionError as error:
+        logging.error("Kinopoisk bad response; May be proxy server is failed; Proxy: {}".format(g.config['proxy']))
+        return get_from_grab(url, link)
+    except BaseException as error:
+        logging.error("Error on getting page; Grab proxy: {}".format(g.config['proxy']))
+        raise error
 
 def get_page(link: LinkGP, cachedir: str, cachetime: int) -> LinkGP:
     """
     Get content for link
-    
     :param link: 
     :param cachedir: 
     :param cachetime: 
     :return: 
     """
-    g = get_randgrab()
-    link.proxy = g.config['proxy']
     if cachedir and cachetime:
         @memoize_fs(cachedir, FUNC_NAME, cachetime)
         def req_mem(url) -> Union[bool, GResponse]:
-            res = g.go(url)
+            res = get_from_grab(url, link)
             if res.code == 200:
                 if 'showcaptcha' not in res.url and 'DOCTYPE' in res.body[0:20].decode():
                     return res
@@ -101,9 +110,9 @@ def get_page(link: LinkGP, cachedir: str, cachetime: int) -> LinkGP:
 
         response = req_mem(link.url)
         if response:
-            link.set_req(req_mem(link.url))
+            link.set_req(response)
     else:
-        link.set_req(g.go(link.url))
+        link.set_req(get_from_grab(link.url, link))
     return link
 
 
@@ -131,26 +140,13 @@ def get_pages(page_links: Union[List[LinkGP], List[str]], sleep=3, *, callback: 
     :param sleep:
     :return: list of GetPage
     """
-    ready_linksgp = []  # type List[GetPage]
-    # threads_list = []
+    ready_linksgp = []  # type: List[GetPage]
 
     for link in page_links:
         new_gp = get_page(link, cachedir=cachedir, cachetime=cachetime)
         ready_linksgp.append(new_gp)
         time.sleep(sleep)
-        # if link is str:
-        #     link = LinkGP(link)
-        #
-        # thread = threading.Thread(target=mkreq, args=(link, ready_linksgp, cachedir, cachetime))
-        #
-        # threads_list.append(thread)
-        # thread.start()
-        # if not check_in_cache(cachedir, FUNC_NAME, link.url):
-        #     time.sleep(sleep)
-
-    # for thread in threads_list:
-    #     thread.join()
-
+    
     if callback:
         for linkgp in ready_linksgp:
             callback(linkgp)
