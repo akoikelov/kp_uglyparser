@@ -20,8 +20,8 @@ class Persone:
         """
         Create Persone parser and get info about persons
         :param ids: string like 1,2,3,4 ...
-        :param cachedir: 
-        :param cachetime: 
+        :param cachedir:
+        :param cachetime:
         """
         global _cachetime, _cachedir
         self.ids = ids.split(',')
