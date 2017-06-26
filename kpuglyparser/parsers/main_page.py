@@ -429,7 +429,7 @@ class MainPageParser():
                     if sequel_link.attrs['href'] != '#':
                         self.sequels.append({
                             'nameru': sequel_link.attrs['title'],
-                            'nameen': sequel_en.text if sequel_en else None,
+                            'nameen': sequel_en.text if sequel_en and getattr(sequel_en, 'text', False) else None,
                             'link': "https://kinopoisk.ru" + sequel_link.attrs['href'],
                             'id': int(''.join([x for x in sequel_link.attrs['href'] if x.isdigit()]))
                         })
