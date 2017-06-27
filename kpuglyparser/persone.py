@@ -64,7 +64,7 @@ class Persone:
                 soups.append(soup)
             else:
                 logging.error("Bad response from kinopoisk; Status code: {0}; Persone id: {1}"
-                              .format(link.status_code, link.additional.id))
+                              .format(link.status_code, link.additional['id']))
         return soups
 
     @staticmethod
