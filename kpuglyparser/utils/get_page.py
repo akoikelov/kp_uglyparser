@@ -4,6 +4,7 @@ import time
 from typing import Union, List, Callable
 
 import os
+import re
 import requests
 import random
 import logging
@@ -20,15 +21,16 @@ ua = UserAgent()
 FUNC_NAME = 'get_page'
 
 
-def get_grab(proxy=None):
+def get_grab(proxy=None, login=None, password=None):
     g = Grab()
     if proxy:
-        g.setup(proxy=proxy, proxy_type='socks5', connect_timeout=60, timeout=60)
+        g.setup(proxy=proxy, proxy_type='socks5', connect_timeout=10, timeout=10)
+    if login and password:
+        g.setup(proxy_userpwd="{}:{}".format(login, password))
     return g
 
 
 def check_proxy(checked_proxy):
-
     try:
         requests.get('http://google.com', proxies={
             'http': checked_proxy,
@@ -47,7 +49,12 @@ PROXIES_ENV = os.environ.get("PROXIES")
 if PROXIES_ENV:
     proxies = PROXIES_ENV.split(';')
     for proxy in proxies:
-        grabs.append(get_grab(proxy))
+        match = re.match(r'((\d{2,3}\.\d{2,3}\.\d{2,3}\.\d{2,3}):(\d{3,5}))(\{((.*?):(.*?))\}|);?', proxy)
+        host = match.group(2)
+        port = match.group(3)
+        login = match.group(6)
+        password = match.group(7)
+        grabs.append(get_grab("{}:{}".format(host, port), login, password))
 grabs.append(get_grab())
 
 
@@ -82,6 +89,9 @@ def get_from_grab(url, link, ):
         return res
     except grab.error.GrabConnectionError as error:
         logging.error("Kinopoisk bad response; May be proxy server is failed; Proxy: {}".format(g.config['proxy']))
+        return get_from_grab(url, link)
+    except grab.error.GrabTimeoutError:
+        logging.error("Grab timeout")
         return get_from_grab(url, link)
     except BaseException as error:
         logging.error("Error on getting page; Grab proxy: {}".format(g.config['proxy']))
