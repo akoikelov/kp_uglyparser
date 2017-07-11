@@ -58,12 +58,14 @@ class ReviewsPageParser:
 
     @staticmethod
     def get_pages_count(soup: BeautifulSoup):
-        soup = soup.find("div", class_='pagesFromTo')  # type: BeautifulSoup
         if soup:
-            match = re.match(r'(\d+.\d+ из )(?P<full_count>\d+)', soup.text)
-            if match:
-                reviews_count = int(match.group('full_count'))
-                return math.ceil(reviews_count / 200)
+            soup = soup.find("div", class_='pagesFromTo')  # type: BeautifulSoup
+            if soup:
+                match = re.match(r'(\d+.\d+ из )(?P<full_count>\d+)', soup.text)
+                if match:
+                    reviews_count = int(match.group('full_count'))
+                    return math.ceil(reviews_count / 200)
+        return 0
 
     def get_reviews_block_soup(self, page: int) -> Union[BeautifulSoup, bool]:
         """TODO"""
@@ -82,6 +84,8 @@ class ReviewsPageParser:
 
     def get_subsoup_from_block(self):
         for block in self.blocks:
+            if not block:
+                continue
             reviews_items = block.find_all("div", class_="response")
             if reviews_items:
                 self._reviews += reviews_items

@@ -284,8 +284,9 @@ class MainPageParser():
             genres_table_row = genres_marker_td.parent
             genres_span = genres_table_row.find(
                 'span', attrs={'itemprop': 'genre'})
-            genres = [genre.text for genre in genres_span.find_all('a')]
-            self.genres = genres
+            if genres_span:
+                genres = [genre.text for genre in genres_span.find_all('a')]
+                self.genres = genres
 
     def get_budget(self):
         budget_marker_td = self.info_table.find('td', text='бюджет')
