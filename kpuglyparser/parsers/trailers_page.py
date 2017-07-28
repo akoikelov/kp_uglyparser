@@ -76,7 +76,7 @@ class TrailersPageParser(object):
             # flag = trailer.find_all('div', class_='flag') or None
             links = TrailersPageParser.links_detect(trailer)
             poster = TrailersPageParser.get_preview(trailer)
-            if poster or len(links):
+            if poster and len(links):
                 self.append_in_trailers(title.text, runtime, TrailersPageParser.get_mktime_from_str(
                     public_date.text), links, poster)
 
