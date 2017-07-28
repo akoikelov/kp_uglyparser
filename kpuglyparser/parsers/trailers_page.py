@@ -5,7 +5,7 @@ import htmlmin
 import re
 import logging
 import dateparser
-from ..utils.get_page import get_page, LinkGP
+from ..utils.get_page import get_page, LinkGP, get_pages
 from ..settings import LINK_TO_MAIN_PAGE
 
 
@@ -13,7 +13,6 @@ class TrailersPageParser(object):
     """
     Get trailers and another videos for the movie
     """
-
     def __init__(self, src: str, movie_id: Union[int, bool] = False):
         """
         Init instance of TrailersPageParser
@@ -25,6 +24,7 @@ class TrailersPageParser(object):
         self.movie_id = movie_id
         self.trailers = []
         self.trailers_blocks = []  # beutiul soups
+        self.pages = []  # beutiul soups
 
         self.cachedir = None
         self.cachetime = None
@@ -37,16 +37,21 @@ class TrailersPageParser(object):
     def parse(self):
         reqex_between_comments = r"<!-- ролик -->([^≠]+?)<!-- /ролик -->"
         strainer = SoupStrainer("div", class_='block_left')
-        trailers_page_linkgp = get_page(LinkGP(self.src), cachedir=self.cachedir, cachetime=self.cachetime)
+        trailers_page_linkgp = get_page(LinkGP(self.src),
+        cachedir=self.cachedir, cachetime=self.cachetime)
         if trailers_page_linkgp.content:
-            trailers_soup = BeautifulSoup(trailers_page_linkgp.content, 'lxml', parse_only=strainer)
-            min_text = htmlmin.minify(trailers_soup.prettify(), remove_empty_space=True)
-            trailer_blocks = re.findall(reqex_between_comments, min_text)[1:]
-            for trailer_block in trailer_blocks:
-                self.trailers_blocks.append(BeautifulSoup(trailer_block, 'lxml'))
+            trailers_soup = BeautifulSoup(
+                trailers_page_linkgp.content, 'lxml', parse_only=strainer)
+            links = trailers_soup.find_all('a', attrs={
+                "href": re.compile(r"/film/{}/video/(\d+)/$".format(self.movie_id))
+            })
+            pages = get_pages([LinkGP("https://kinopoisk.ru" + i.attrs['href']) for i in links if i.attrs['href']], cachedir=self.cachedir, cachetime = self.cachetime)
+            trailer_page_strainer = SoupStrainer("td", class_='news')
+            self.pages = [BeautifulSoup(p.content, 'lxml', parse_only=trailer_page_strainer) for p in pages]
             self.parse_trailers_blocks()
         else:
-            logging.error("Cannot get trailers page; Status code: {0}".format(trailers_page_linkgp.status_code))
+            logging.error("Cannot get trailers page; Status code: {0}".format(
+                trailers_page_linkgp.status_code))
 
     @property
     def full(self):
@@ -58,21 +63,23 @@ class TrailersPageParser(object):
         and parse from they trailers
         :return:
         """
-        for trailer in self.trailers_blocks:
-            title = trailer.find_all('a', class_='all', href=re.compile(r"/film/"))[0]
+        for trailer in self.pages:
+            title = trailer.find_all('td', attrs={"style": "color: #333; font-size: 27px; padding-left: 30px"})[0]
             # runtime
-            runtime_tds = title.next_sibling.find_all("td")
+            runtime_tds = title.parent.next_sibling.next_sibling.find_all("td")
             runtime = None
             if runtime_tds:
-                runtime = runtime_tds[1].text if len(runtime_tds) > 2 else None
+                runtime = runtime_tds[2].text if len(runtime_tds) > 2 else None
             # public_date
-            public_date = title.next_sibling.find_all("td")[-1]
+            public_date = runtime_tds[-2]
             # noinspection PyUnusedLocal
-            flag = (trailer.find_all('div', class_='flag') or None)
+            # flag = trailer.find_all('div', class_='flag') or None
             links = TrailersPageParser.links_detect(trailer)
             poster = TrailersPageParser.get_preview(trailer)
-            if poster and len(links):
-                self.append_in_trailers(title.text, runtime, TrailersPageParser.get_mktime_from_str(public_date.text), links, poster)
+            if poster or len(links):
+                self.append_in_trailers(title.text, runtime, TrailersPageParser.get_mktime_from_str(
+                    public_date.text), links, poster)
+
 
     @staticmethod
     def get_preview(trailer_block):
@@ -92,7 +99,8 @@ class TrailersPageParser(object):
         :param trailer_block: Soup object of elements between comments (<!-- ролик --><tr><tr><tr><!-- /ролик -->)
         :return:
         """
-        b_texts = trailer_block.find_all('b', text=re.compile(r"((.+) качество)"))  # array of b elements(instance of Soup)
+        b_texts = trailer_block.find_all('b', text=re.compile(
+            r"((.+) качество)"))  # array of b elements(instance of Soup)
         links = []
         for b in b_texts:
             link = b.parent
@@ -100,7 +108,8 @@ class TrailersPageParser(object):
                 links.append(TrailersPageParser.create_link_dict(TrailersPageParser.quality_detect(b.text),
                                                                  TrailersPageParser.get_mp4_from_url(link.attrs['href'])))
         if len(links) == 0:
-            a_texts = trailer_block.find_all('a', text=re.compile(r"((.+) качество)"))
+            a_texts = trailer_block.find_all(
+                'a', text=re.compile(r"((.+) качество)"))
             for a in a_texts:
                 if TrailersPageParser.get_mp4_from_url(a.attrs['href']):
                     links.append(TrailersPageParser.create_link_dict(TrailersPageParser.quality_detect(a.text),
@@ -143,7 +152,8 @@ class TrailersPageParser(object):
         if mp4_link and mp4_link.group(1):
             return mp4_link.group(1)
         else:
-            logging.error("Cannot get url to mp4 file in link: <<<{0}>>>".format(url))
+            logging.error(
+                "Cannot get url to mp4 file in link: <<<{0}>>>".format(url))
             return None
 
     @staticmethod
@@ -157,7 +167,8 @@ class TrailersPageParser(object):
         if date:
             return int(date.timestamp())
         else:
-            logging.error("Cannot get timestamp from date: {0}".format(public_date))
+            logging.error(
+                "Cannot get timestamp from date: {0}".format(public_date))
             return None
 
     def append_in_trailers(self, title: str, runtime: str, public_date, links: list, poster: str):
@@ -180,7 +191,8 @@ class TrailersPageParser(object):
         pass
 
     def get_main_trailer(self):
-        page = get_page(LinkGP(LINK_TO_MAIN_PAGE.format(self.movie_id)), cachedir=self.cachedir, cachetime=self.cachetime)
+        page = get_page(LinkGP(LINK_TO_MAIN_PAGE.format(self.movie_id)),
+                        cachedir=self.cachedir, cachetime=self.cachetime)
         if page.status_code == 200 and page.content:
             soup = BeautifulSoup(page.content, 'lxml')  # type: BeautifulSoup
             if soup:
@@ -190,24 +202,30 @@ class TrailersPageParser(object):
                     script = trailer_block.script
                     if script:
                         script_text = script.text
-                        trailer_file_regex = re.compile(r'\"trailerFile\":.+\"(.+\.(mp4|avi))\"')
-                        trailer_preview_regex = re.compile(r'\"previewFile\":.+\"(.+\.jpg)\"')
+                        trailer_file_regex = re.compile(
+                            r'\"trailerFile\":.+\"(.+\.(mp4|avi))\"')
+                        trailer_preview_regex = re.compile(
+                            r'\"previewFile\":.+\"(.+\.jpg)\"')
 
                         trailer_file = None
                         trailer_preview = None
 
-                        trailer_file_regex_groups = trailer_file_regex.search(script_text)
+                        trailer_file_regex_groups = trailer_file_regex.search(
+                            script_text)
                         if trailer_file_regex_groups:
                             trailer_file = trailer_file_regex_groups.group(1)
                             if trailer_file:
                                 trailer_file = "https://kp.cdn.yandex.net/" + trailer_file
 
-                        trailer_preview_regex_groups = trailer_preview_regex.search(script_text)
+                        trailer_preview_regex_groups = trailer_preview_regex.search(
+                            script_text)
                         if trailer_preview_regex_groups:
-                            trailer_preview = trailer_preview_regex_groups.group(1)
+                            trailer_preview = trailer_preview_regex_groups.group(
+                                1)
                             if trailer_preview:
                                 trailer_preview = "https://kp.cdn.yandex.net/" + trailer_preview
                         if trailer_file and trailer_preview:
                             self.append_in_trailers("Trailer", "0:0", 0,
-                                                    [TrailersPageParser.create_link_dict("middle", trailer_file)],
+                                                    [TrailersPageParser.create_link_dict(
+                                                        "middle", trailer_file)],
                                                     trailer_preview)
