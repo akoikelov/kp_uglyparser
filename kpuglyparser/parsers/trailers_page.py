@@ -35,7 +35,6 @@ class TrailersPageParser(object):
             self.get_main_trailer()
 
     def parse(self):
-        reqex_between_comments = r"<!-- ролик -->([^≠]+?)<!-- /ролик -->"
         strainer = SoupStrainer("div", class_='block_left')
         trailers_page_linkgp = get_page(LinkGP(self.src),
         cachedir=self.cachedir, cachetime=self.cachetime)
@@ -43,9 +42,10 @@ class TrailersPageParser(object):
             trailers_soup = BeautifulSoup(
                 trailers_page_linkgp.content, 'lxml', parse_only=strainer)
             links = trailers_soup.find_all('a', attrs={
-                "href": re.compile(r"/film/{}/video/(\d+)/$".format(self.movie_id))
+                "href": re.compile(r"/film/{}/video/(\d+)/$".format(self.movie_id)),
+                "style": None
             })
-            pages = get_pages([LinkGP("https://kinopoisk.ru" + i.attrs['href']) for i in links if i.attrs['href']], cachedir=self.cachedir, cachetime = self.cachetime)
+            pages = get_pages([LinkGP("https://www.kinopoisk.ru" + i.attrs['href']) for i in links if i.attrs['href']], cachedir=self.cachedir, cachetime = self.cachetime)
             trailer_page_strainer = SoupStrainer("td", class_='news')
             self.pages = [BeautifulSoup(p.content, 'lxml', parse_only=trailer_page_strainer) for p in pages]
             self.parse_trailers_blocks()
