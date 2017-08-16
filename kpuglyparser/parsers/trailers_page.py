@@ -42,7 +42,7 @@ class TrailersPageParser(object):
             trailers_soup = BeautifulSoup(
                 trailers_page_linkgp.content, 'lxml', parse_only=strainer)
             links = trailers_soup.find_all('a', attrs={
-                "href": re.compile(r"/film/{}/video/(\d+)/$".format(self.movie_id)),
+                "href": re.compile(r"/film/.+/video/(\d+)/$"),
                 "style": None
             })
             pages = get_pages([LinkGP("https://www.kinopoisk.ru" + i.attrs['href']) for i in links if i.attrs['href']], cachedir=self.cachedir, cachetime = self.cachetime)

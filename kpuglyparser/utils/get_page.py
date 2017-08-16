@@ -76,11 +76,14 @@ class LinkGP:
         self.status_code = None
         self.content = None
         self.proxy = None
+        self.final_url = None
 
     def set_req(self, req: Union[bool, GResponse]):
         self.req = req
         self.status_code = req.code
         self.content = req.body
+        self.final_url = req.url
+
 
 def get_from_grab(url, link, ):
     g = get_randgrab()
