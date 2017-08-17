@@ -428,11 +428,12 @@ class MainPageParser():
                 sequel_link = sequel.find('a')
                 if sequel_link:
                     if sequel_link.attrs['href'] != '#':
+                        h = sequel_link.attrs['href'] # type: str
                         self.sequels.append({
                             'nameru': sequel_link.attrs['title'],
                             'nameen': sequel_en.text if sequel_en and getattr(sequel_en, 'text', False) else None,
                             'link': "https://kinopoisk.ru" + sequel_link.attrs['href'],
-                            'id': int(''.join([x for x in sequel_link.attrs['href'] if x.isdigit()]))
+                            'id': int(''.join([x for x in h[h.rfind('-')+1:] if x.isdigit()]))
                         })
 
     def get_trivia_data(self):
@@ -456,8 +457,9 @@ class MainPageParser():
                         film_link = recommendation_tr.find(
                             'a', class_=' b_gray i_orig')
                         if film_link:
+                            h = film_link.attrs['href']
                             self.recommendations.append({
-                                'id': int(''.join([c for c in film_link.attrs['href'] if c.isdigit()])),
+                                'id': int(''.join([c for c in h[h.rfind('-')+1:] if c.isdigit()])),
                                 'poster': film_link.img.attrs['src'],
                                 'nameru': film_link.img.attrs['alt']
                             })
