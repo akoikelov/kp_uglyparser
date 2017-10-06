@@ -82,15 +82,14 @@ class TrailersPageParser(object):
 
 
     @staticmethod
-    def get_preview(trailer_block):
-        reg_ex_poster = re.compile(r"'previewFile'.+'(.+).jpg'")
-        flat_text = htmlmin.minify(trailer_block.prettify())
-        result = reg_ex_poster.findall(flat_text)
-        if result and result[0]:
-            return 'https://kp.cdn.yandex.net/' + result[0] + '.jpg'
+    def get_preview(trailer_block: BeautifulSoup):
+        link = trailer_block.find("link", attrs={
+            "itemprop":"thumbnailUrl"
+        })
+        if link:
+            return link.attrs.get("href")
         else:
-            return False
-
+            return None
     # UTILS FUNCS
     @staticmethod
     def links_detect(trailer_block):
