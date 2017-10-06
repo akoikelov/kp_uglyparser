@@ -49,7 +49,7 @@ PROXIES_ENV = os.environ.get("PROXIES")
 if PROXIES_ENV:
     proxies = PROXIES_ENV.split(';')
     for proxy in proxies:
-        match = re.match(r'((\d{2,3}\.\d{2,3}\.\d{2,3}\.\d{2,3}):(\d{3,5}))(\{((.*?):(.*?))\}|);?', proxy)
+        match = re.match(r'((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d{3,5}))(\{((.*?):(.*?))\}|);?', proxy)
         host = match.group(2)
         port = match.group(3)
         login = match.group(6)
