@@ -301,12 +301,14 @@ class MainPageParser():
                 currency = 'undefined'
 
             budget_td = budget_table_row.find(
-                class_=re.compile(r'(dollar|euro|pound)'))
+                class_=re.compile(r'(dollar|euro|pound|yen)'))
             # if currency is Euro
             if 'euro' in budget_td.attrs['class']:
                 currency = 'EUR'
             elif 'pound' in budget_td.attrs['class']:
                 currency = 'GBP'
+            elif 'yen' in budget_td.attrs['class']:
+                currency = 'JPY'
 
             budget = budget_td.find(string=re.compile(r'((\d+(?:\s|))+)'))
             self.budget['budget'] = int(
