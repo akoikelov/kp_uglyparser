@@ -172,7 +172,7 @@ def get_pages(page_links: Union[List[LinkGP], List[str]], sleep=3, *, callback: 
     return ready_linksgp
 
 
-def get_pages_g(page_links: Union[List[LinkGP], List[str]], sleep=3, *, cachedir, cachetime) -> List[LinkGP]:
+def get_pages_g(page_links: Union[List[LinkGP], List[str]], sleep=2, *, cachedir, cachetime) -> List[LinkGP]:
     for link in page_links:
         new_gp = get_page(link, cachedir=cachedir, cachetime=cachetime)
         yield new_gp

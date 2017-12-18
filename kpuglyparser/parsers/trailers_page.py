@@ -10,7 +10,7 @@ from ..utils.decorators import compose, to_filter, to_map
 TRAILER_PAGE_STRAINER = SoupStrainer("td", class_='news')
 MAIN_TRAILERS_PAGE_STRAINER = SoupStrainer("div", class_='block_left')
 CACHEDIR = ""
-CACHETIME = 60*60*60
+CACHETIME = 60 * 60 * 60
 
 
 def __get_list_page(movie_id) -> BeautifulSoup:
@@ -88,9 +88,11 @@ def __separate_data(block: BeautifulSoup) -> dict:
 
 
 def __get_redirect_result(trailer: dict):
-    replaced_link = trailer['links'][0]['url'].replace('getlink', 'gettrailer')
-    response = requests.head(replaced_link)
-    trailer['links'][0]['url'] = response.headers.get('location')
+    def modify_link(link):
+        replaced_link = link['url'].replace('getlink', 'gettrailer')
+        response = requests.head(replaced_link)
+        link['url'] = response.headers.get('location')
+    trailer['links'] = list(map(modify_link, trailer['links']))
     return trailer
 
 
