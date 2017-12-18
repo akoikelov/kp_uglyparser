@@ -1,9 +1,9 @@
 import logging
 from .parsers.image_page import ImagePageParser
-from .parsers.trailers_page import TrailersPageParser
 from .parsers.main_page import MainPageParser
 from .parsers.reviews_page import ReviewsPageParser
 from .parsers.staff_page import StaffPageParser
+from .parsers.trailers_page import parse_trailers
 
 
 class Film(object):
@@ -153,11 +153,7 @@ class Film(object):
         self.concept = parser.full
 
     def parse_trailers_page(self, src):
-        parser = TrailersPageParser(src, self.id)
-        parser.cachedir = self.cachedir
-        parser.cachetime = self.cachetime
-        parser.start()
-        self.trailers = parser.full
+        self.trailers = parse_trailers(self.id, self.cachedir, self.cachetime)
 
     def parse_reviews_page(self, src: str):
         parser = ReviewsPageParser(self.id)

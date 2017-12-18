@@ -1,18 +1,17 @@
-import threading
-
-import time
-from typing import Union, List, Callable
-
-import os
-import re
-import requests
-import random
 import logging
+import os
+import random
+import re
+import time
+from typing import Callable, List, Union
+
 import grab
+import requests
+from fake_useragent import UserAgent
 from grab import Grab
 from grab.response import Response as GResponse
-from fake_useragent import UserAgent
-from .memoize import memoize_fs, check_in_cache
+
+from .memoize import check_in_cache, memoize_fs
 
 proxies = []
 grabs = []
@@ -24,7 +23,8 @@ FUNC_NAME = 'get_page'
 def get_grab(proxy=None, login=None, password=None):
     g = Grab()
     if proxy:
-        g.setup(proxy=proxy, proxy_type='socks5', connect_timeout=10, timeout=10)
+        g.setup(proxy=proxy, proxy_type='socks5',
+                connect_timeout=10, timeout=10)
     if login and password:
         g.setup(proxy_userpwd="{}:{}".format(login, password))
     return g
@@ -45,11 +45,13 @@ def check_proxy(checked_proxy):
         print('Broken proxy:', checked_proxy)
         return False
 
+
 PROXIES_ENV = os.environ.get("PROXIES")
 if PROXIES_ENV:
     proxies = PROXIES_ENV.split(';')
     for proxy in proxies:
-        match = re.match(r'((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d{3,5}))(\{((.*?):(.*?))\}|);?', proxy)
+        match = re.match(
+            r'((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d{3,5}))(\{((.*?):(.*?))\}|);?', proxy)
         host = match.group(2)
         port = match.group(3)
         login = match.group(6)
@@ -91,14 +93,17 @@ def get_from_grab(url, link, ):
         res = g.go(url)
         return res
     except grab.error.GrabConnectionError as error:
-        logging.error("Kinopoisk bad response; May be proxy server is failed; Proxy: {}".format(g.config['proxy']))
+        logging.error("Kinopoisk bad response; May be proxy server is failed; Proxy: {}".format(
+            g.config['proxy']))
         return get_from_grab(url, link)
     except grab.error.GrabTimeoutError:
         logging.error("Grab timeout")
         return get_from_grab(url, link)
     except BaseException as error:
-        logging.error("Error on getting page; Grab proxy: {}".format(g.config['proxy']))
+        logging.error(
+            "Error on getting page; Grab proxy: {}".format(g.config['proxy']))
         raise error
+
 
 def get_page(link: LinkGP, cachedir: str, cachetime: int) -> LinkGP:
     """
@@ -116,7 +121,8 @@ def get_page(link: LinkGP, cachedir: str, cachetime: int) -> LinkGP:
                 if 'showcaptcha' not in res.url and 'DOCTYPE' in res.body[0:20].decode():
                     return res
                 else:
-                    logging.error("kinopoisk want your captcha; Proxy: {}".format(link.proxy))
+                    logging.error(
+                        "kinopoisk want your captcha; Proxy: {}".format(link.proxy))
                     return False
             else:
                 return False
@@ -159,8 +165,15 @@ def get_pages(page_links: Union[List[LinkGP], List[str]], sleep=3, *, callback: 
         new_gp = get_page(link, cachedir=cachedir, cachetime=cachetime)
         ready_linksgp.append(new_gp)
         time.sleep(sleep)
-    
+
     if callback:
         for linkgp in ready_linksgp:
             callback(linkgp)
     return ready_linksgp
+
+
+def get_pages_g(page_links: Union[List[LinkGP], List[str]], sleep=3, *, cachedir, cachetime) -> List[LinkGP]:
+    for link in page_links:
+        new_gp = get_page(link, cachedir=cachedir, cachetime=cachetime)
+        yield new_gp
+        time.sleep(sleep)
