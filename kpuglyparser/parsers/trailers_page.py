@@ -10,13 +10,13 @@ from ..utils.decorators import compose, to_filter, to_map
 TRAILER_PAGE_STRAINER = SoupStrainer("td", class_='news')
 MAIN_TRAILERS_PAGE_STRAINER = SoupStrainer("div", class_='block_left')
 CACHEDIR = ""
-CACHEDIR = ""
+CACHETIME = 60*60*60
 
 
 def __get_list_page(movie_id) -> BeautifulSoup:
     """ return table of trailers from page"""
     link = "https://www.kinopoisk.ru/film/{}/video/".format(movie_id)
-    gplink = get_page(LinkGP(link), cachedir=CACHEDIR, cachetime=CACHEDIR)
+    gplink = get_page(LinkGP(link), cachedir=CACHEDIR, cachetime=CACHETIME)
     return BeautifulSoup(gplink.content, 'lxml', parse_only=MAIN_TRAILERS_PAGE_STRAINER)
 
 
@@ -29,7 +29,7 @@ def __get_gp_links_from_list_page(list_page: BeautifulSoup) -> List[LinkGP]:
 
 
 def __get_blocks_from_links(links: List[LinkGP]) -> List[BeautifulSoup]:
-    return get_pages_g(links, cachedir=CACHEDIR, cachetime=CACHEDIR)
+    return get_pages_g(links, cachedir=CACHEDIR, cachetime=CACHETIME)
 
 
 def __linksgp_to_pages(link: List[LinkGP]):
