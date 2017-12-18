@@ -14,6 +14,6 @@ setup(
         'requests',
         'beaker',
         'fake-useragent',
-        'pydash==3.4.8',
+        'pydash',
     ]
 )
