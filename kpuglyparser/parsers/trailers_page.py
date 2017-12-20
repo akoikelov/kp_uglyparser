@@ -76,10 +76,8 @@ def __get_links_from_blocks(blocks: List[BeautifulSoup]):
 
 
 def __get_posters(block: BeautifulSoup) -> BeautifulSoup:
-    link = block.find("link", attrs={
-        "itemprop": "thumbnailUrl"
-    })
-    block.data['poster'] = link.attrs.get("href")
+    link = block.find("meta", attrs={'itemprop': "thumbnail"})
+    block.data['poster'] = link.attrs.get("content")
     return block
 
 
