@@ -122,7 +122,7 @@ def parse_trailers(movie_id: int, cachedir, cachetime):
         to_map(__get_posters),
         to_map(__separate_data),
         # parse trailers links
-        to_map(__get_redirect_result),
+        # to_map(__get_redirect_result),
         # filter
         to_map(__filter_only_mp4_links),
         to_filter(__filter_empty_links),
