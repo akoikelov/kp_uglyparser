@@ -97,7 +97,7 @@ def __separate_data(block: BeautifulSoup) -> dict:
 def __get_redirect_result(trailer: dict):
     def modify_link(link):
         link['url'] = link['url'].replace('getlink', 'gettrailer')
-        response = requests.head(replaced_link)
+        response = requests.head(link['url'])
         link['rurl'] = response.headers.get('location')
         return link
     trailer['links'] = list(map(modify_link, trailer['links']))
