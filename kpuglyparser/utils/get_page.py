@@ -123,6 +123,7 @@ def get_page(link: LinkGP, cachedir: str, cachetime: int) -> LinkGP:
                 else:
                     logging.error(
                         "kinopoisk want your captcha; Proxy: {}".format(link.proxy))
+                    return get_page(link, cachedir, cachetime)
                     return False
             else:
                 return False

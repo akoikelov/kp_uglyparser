@@ -98,7 +98,7 @@ def __get_redirect_result(trailer: dict):
     def modify_link(link):
         link['url'] = link['url'].replace('getlink', 'gettrailer')
         response = requests.head(link['url'])
-        link['rurl'] = response.headers.get('location')
+        link['rurl'] = response.headers.get('location', '')
         return link
     trailer['links'] = list(map(modify_link, trailer['links']))
     return trailer
