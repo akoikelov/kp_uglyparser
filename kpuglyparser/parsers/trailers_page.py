@@ -77,7 +77,16 @@ def __get_links_from_blocks(blocks: List[BeautifulSoup]):
 
 def __get_posters(block: BeautifulSoup) -> BeautifulSoup:
     link = block.find("meta", attrs={'itemprop': "thumbnail"})
-    block.data['poster'] = link.attrs.get("content")
+    if link:
+        block.data['poster'] = link.attrs.get("content")
+    if not link:
+        link = block.find("link", attrs={'itemprop': "thumbnailUrl"})
+        if link:
+            block.data['poster'] = link.attrs.get("href")
+    if not link:
+        link = block.find("link", attrs={'rel': "videothumbnail"})
+        if link:
+            block.data['poster'] = link.attrs.get("href")
     return block
 
 
@@ -89,7 +98,7 @@ def __get_redirect_result(trailer: dict):
     def modify_link(link):
         replaced_link = link['url'].replace('getlink', 'gettrailer')
         response = requests.head(replaced_link)
-        link['url'] = response.headers.get('location')
+        link['rurl'] = response.headers.get('location')
         return link
     trailer['links'] = list(map(modify_link, trailer['links']))
     return trailer
@@ -97,7 +106,7 @@ def __get_redirect_result(trailer: dict):
 
 def __filter_only_mp4_links(trailer: dict):
     trailer['links'] = list(
-        filter(lambda l: 'mp4' in l['url'], trailer['links']))
+        filter(lambda l: 'mp4' in l['rurl'], trailer['links']))
     return trailer
 
 
@@ -122,7 +131,7 @@ def parse_trailers(movie_id: int, cachedir, cachetime):
         to_map(__get_posters),
         to_map(__separate_data),
         # parse trailers links
-        # to_map(__get_redirect_result),
+        to_map(__get_redirect_result),
         # filter
         to_map(__filter_only_mp4_links),
         to_filter(__filter_empty_links),
