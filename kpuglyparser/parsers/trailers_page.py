@@ -1,4 +1,5 @@
 import re
+import json
 from typing import List
 
 import requests
@@ -51,28 +52,50 @@ def __get_title(block: BeautifulSoup) -> BeautifulSoup:
         block.data['title'] = "Error"
     return block
 
-# def __get_runtime_from_blocks(blocks: List[BeautifulSoup]):
-#     return map()
 
-# def __get_public_date_from_blocks()
+# def __get_links_from_blocks(blocks: List[BeautifulSoup]):
+#     links_reg = re.compile(
+#         "https?:\/\/(www\.kinopoisk\.ru|)\/getlink\.php\?type=trailer&trailer_id=(\d+?)&quality=(.+?)$")
+
+#     def parse_link(link):
+#         match = links_reg.search(link.attrs['href'])
+#         return {
+#             'quality':  match.group(3),
+#             'url':  match.group(0),
+#         }
+
+#     def get_links(block):
+#         links = block.find_all('a', attrs={'href': links_reg})
+#         block.data['links'] = list(map(parse_link, links))
+#         return block
+#     return map(get_links, blocks)
+
+def __get_video_iframe(block: BeautifulSoup):
+    player_div = block.find("iframe", attrs={
+        'id': 'movie-trailer'
+    })
+    src = player_div.attrs.get("src")
+    gplink = get_page(LinkGP(src), cachedir=CACHEDIR, cachetime=CACHETIME)
+    return BeautifulSoup(gplink.content, 'lxml'), block
 
 
-def __get_links_from_blocks(blocks: List[BeautifulSoup]):
-    links_reg = re.compile(
-        "https?:\/\/(www\.kinopoisk\.ru|)\/getlink\.php\?type=trailer&trailer_id=(\d+?)&quality=(.+?)$")
-
-    def parse_link(link):
-        match = links_reg.search(link.attrs['href'])
-        return {
-            'quality':  match.group(3),
-            'url':  match.group(0),
-        }
-
-    def get_links(block):
-        links = block.find_all('a', attrs={'href': links_reg})
-        block.data['links'] = list(map(parse_link, links))
-        return block
-    return map(get_links, blocks)
+def __get_links_from_frame_block(frame_block__block):
+    frame_block, block = frame_block__block
+    player_div = frame_block.find("div", attrs={
+        'id': 'player'
+    })
+    player_div_json = player_div.attrs['data-params']
+    player_data = json.loads(player_div_json)
+    try:
+        video_url = player_data.get('html5').get('mp4').get('videoUrl')
+        block.data['links'] = [{
+            'quality': 720,
+            'url': video_url
+        }]
+    except BaseException as error:
+        block.data['links'] = []
+        pass
+    return block
 
 
 def __get_posters(block: BeautifulSoup) -> BeautifulSoup:
@@ -94,20 +117,20 @@ def __separate_data(block: BeautifulSoup) -> dict:
     return block.data
 
 
-def __get_redirect_result(trailer: dict):
-    def modify_link(link):
-        link['url'] = link['url'].replace('getlink', 'gettrailer')
-        response = requests.head(link['url'])
-        link['rurl'] = response.headers.get('location', '')
-        return link
-    trailer['links'] = list(map(modify_link, trailer['links']))
-    return trailer
+# def __get_redirect_result(trailer: dict):
+#     def modify_link(link):
+#         link['url'] = link['url'].replace('getlink', 'gettrailer')
+#         response = requests.head(link['url'])
+#         link['rurl'] = response.headers.get('location', '')
+#         return link
+#     trailer['links'] = list(map(modify_link, trailer['links']))
+#     return trailer
 
 
-def __filter_only_mp4_links(trailer: dict):
-    trailer['links'] = list(
-        filter(lambda l: 'mp4' in l['rurl'], trailer['links']))
-    return trailer
+# def __filter_only_mp4_links(trailer: dict):
+#     trailer['links'] = list(
+#         filter(lambda l: 'mp4' in l['rurl'], trailer['links']))
+#     return trailer
 
 
 def __filter_empty_links(trailer: dict):
@@ -127,13 +150,15 @@ def parse_trailers(movie_id: int, cachedir, cachetime):
         to_map(__add_data_attr),
         # parse blocks
         to_map(__get_title),
-        __get_links_from_blocks,
+        # __get_links_from_blocks,
+        to_map(__get_video_iframe),
+        to_map(__get_links_from_frame_block),
         to_map(__get_posters),
         to_map(__separate_data),
         # parse trailers links
-        to_map(__get_redirect_result),
+        # to_map(__get_redirect_result),
         # filter
-        to_map(__filter_only_mp4_links),
+        # to_map(__filter_only_mp4_links),
         to_filter(__filter_empty_links),
         list
     )(movie_id))
