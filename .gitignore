@@ -1,8 +1,13 @@
 __pycache__
 uglyparser.iml
+pip-selfcheck.json
 .vscode
 .idea
 test.py
 cache
 build
 dist
+bin
+include
+lib
+share

@@ -68,7 +68,7 @@ def get_randgrab():
 class LinkGP:
     def __init__(self, url: str, **kwargs):
         """
-        :param url: 
+        :param url:
         :param args: another arguments which saved in the field "additional'
         """
         self.url = url
@@ -108,11 +108,12 @@ def get_from_grab(url, link, ):
 def get_page(link: LinkGP, cachedir: str, cachetime: int) -> LinkGP:
     """
     Get content for link
-    :param link: 
-    :param cachedir: 
-    :param cachetime: 
-    :return: 
+    :param link:
+    :param cachedir:
+    :param cachetime:
+    :return:
     """
+    logging.error("Getting url: {}".format(link.url))
     if cachedir and cachetime:
         @memoize_fs(cachedir, FUNC_NAME, cachetime)
         def req_mem(url) -> Union[bool, GResponse]:
@@ -124,7 +125,6 @@ def get_page(link: LinkGP, cachedir: str, cachetime: int) -> LinkGP:
                     logging.error(
                         "kinopoisk want your captcha; Proxy: {}".format(link.proxy))
                     return get_page(link, cachedir, cachetime)
-                    return False
             else:
                 return False
 
@@ -139,8 +139,8 @@ def get_page(link: LinkGP, cachedir: str, cachetime: int) -> LinkGP:
 def mkreq(link: LinkGP, ready_links_list: List[LinkGP], cachedir, cachetime):
     """
     Create GetPage
-    :param cachetime: 
-    :param cachedir: 
+    :param cachetime:
+    :param cachedir:
     :param link:
     :param ready_links_list: List in which it is necessary to put object of GetPage
     :return:
@@ -154,8 +154,8 @@ def get_pages(page_links: Union[List[LinkGP], List[str]], sleep=3, *, callback: 
     """
     Get pages in threads
     :param cachetime:
-    :param cachedir: 
-    :param callback: 
+    :param cachedir:
+    :param callback:
     :param page_links: If this argument is list of dicts, each dict must contain field "url"
     :param sleep:
     :return: list of GetPage

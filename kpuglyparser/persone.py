@@ -41,7 +41,7 @@ class Persone:
     def parse(self, persone_ids):
         """
         parse
-        :param persone_ids: 
+        :param persone_ids:
         """
         return Persone.parse_soups(Persone.create_soups(self.get_requests(persone_ids)))
 
@@ -135,10 +135,13 @@ class Persone:
     @staticmethod
     def get_birthplace(soup):
         birthplace = []
-        places = soup.find(
-            "td", string="место рождения").next_sibling.find_all('a')  # 'a' tags
-        for place in places:
-            birthplace.append(place.text)
+        try:
+            places = soup.find(
+                "td", string="место рождения").next_sibling.find_all('a')  # 'a' tags
+            for place in places:
+                birthplace.append(place.text)
+        except BaseException as error:
+            pass
         return birthplace
 
     @staticmethod
