@@ -33,13 +33,19 @@ def __get_blocks_from_links(links: List[LinkGP]) -> List[BeautifulSoup]:
     return get_pages_g(links, cachedir=CACHEDIR, cachetime=CACHETIME)
 
 
-def __linksgp_to_pages(link: List[LinkGP]):
-    return BeautifulSoup(link.content, 'lxml', parse_only=TRAILER_PAGE_STRAINER)
+def __linksgp_to_pages(link: LinkGP):
+    b = BeautifulSoup(link.content, 'lxml', parse_only=TRAILER_PAGE_STRAINER)
+    b.data = {
+        'original_link': link.url
+    }
+
+    return b
+    # return BeautifulSoup(link.content, 'lxml', parse_only=TRAILER_PAGE_STRAINER)
 
 
-def __add_data_attr(block: BeautifulSoup) -> BeautifulSoup:
-    block.data = {}
-    return block
+# def __add_data_attr(block: BeautifulSoup) -> BeautifulSoup:
+#     block.data = {}
+#     return block
 
 
 def __get_title(block: BeautifulSoup) -> BeautifulSoup:
@@ -147,7 +153,7 @@ def parse_trailers(movie_id: int, cachedir, cachetime):
         __get_blocks_from_links,
         to_map(__linksgp_to_pages),
         # add data attribute
-        to_map(__add_data_attr),
+        # to_map(__add_data_attr),
         # parse blocks
         to_map(__get_title),
         # __get_links_from_blocks,
