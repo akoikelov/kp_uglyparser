@@ -1,5 +1,9 @@
+import re
+
 import requests
 import json
+
+from kpuglyparser.film import Film
 from .utils.memoize import memoize_fs
 
 
@@ -22,7 +26,7 @@ def search_movie(q, cachedir=False, cachetime=3600 * 24):
     :param q:
     :return:
     """
-    # @memoize_fs(cachedir, "search_movie", cachetime)
+    @memoize_fs(cachedir, "search_movie", cachetime)
     def search(q):
         resp = requests.get('https://suggest-kinopoisk.yandex.net/suggest-kinopoisk?srv=kinopoisk&part={search}'.format(search=q))
         if resp.status_code == 200:
@@ -36,4 +40,22 @@ def search_movie(q, cachedir=False, cachetime=3600 * 24):
         else:
             return []
 
-    return search(q)
+    matches = re.findall('https://www.kinopoisk.ru/film/([0-9]+)/', q)
+
+    if len(matches) > 0:
+        movie = Film(matches[0], cachedir=cachedir, cachetime=cachetime)
+        movie.get_content('main_page')
+
+        data = movie.full
+
+        return [
+            {
+                'id': data['id'],
+                'nameru': data['main_page']['nameru'],
+                'nameen': data['main_page']['nameen'],
+                'rating': data['main_page']['rating'],
+                'year': data['main_page']['year'],
+            }
+        ]
+    else:
+        return search(q)
