@@ -40,7 +40,7 @@ def search_movie(q, cachedir=False, cachetime=3600 * 24):
         else:
             return []
 
-    matches = re.findall('https://www.kinopoisk.ru/film/([0-9]+)/', q)
+    matches = re.findall('https://www.kinopoisk.ru/film/(.+)/', q)
 
     if len(matches) > 0:
         movie = Film(matches[0], cachedir=cachedir, cachetime=cachetime)
