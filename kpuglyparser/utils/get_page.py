@@ -11,6 +11,7 @@ from fake_useragent import UserAgent
 from grab import Grab
 from grab.response import Response as GResponse
 
+from kpuglyparser.utils.exception import CaptchaException, BadResponse
 from .memoize import check_in_cache, memoize_fs
 
 proxies = []
@@ -117,6 +118,7 @@ def get_page(link: LinkGP, cachedir: str, cachetime: int) -> LinkGP:
     if cachedir and cachetime:
         @memoize_fs(cachedir, FUNC_NAME, cachetime)
         def req_mem(url) -> Union[bool, GResponse]:
+
             res = get_from_grab(url, link)
             if res.code == 200:
                 if 'showcaptcha' not in res.url and 'DOCTYPE' in res.body[0:20].decode():
@@ -124,13 +126,18 @@ def get_page(link: LinkGP, cachedir: str, cachetime: int) -> LinkGP:
                 else:
                     logging.error(
                         "kinopoisk want your captcha; Proxy: {}".format(link.proxy))
-                    return get_page(link, cachedir, cachetime)
-            else:
-                return False
+                    raise CaptchaException()
 
-        response = req_mem(link.url)
-        if response:
+            else:
+                raise BadResponse()
+
+        try:
+            response = req_mem(link.url)
             link.set_req(response)
+        except CaptchaException:
+            return get_page(link, cachedir, cachetime)
+        except BadResponse:
+            pass
     else:
         link.set_req(get_from_grab(link.url, link))
     return link
