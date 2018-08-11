@@ -108,7 +108,7 @@ class Persone:
     def get_growth(soup: BeautifulSoup):
         growth_block = soup.find("td", string="рост")
         if growth_block:
-            growth = growth_block.next_sibling.find("span").text.replace(' м', '')
+            growth = growth_block.parent.find("span").text.replace(' м', '')
             return float(growth)
 
     @staticmethod
