@@ -126,11 +126,14 @@ class Persone:
     def get_diedate(soup):
         diedate = soup.find("td", string="дата смерти")
         if diedate:
-            diedate = diedate.next_sibling.find("span").next
-            delorean_date = Delorean(dateparser.parse(diedate), timezone='UTC')
-            return delorean_date.datetime.isoformat()
-        else:
-            return None
+            span = diedate.next_sibling.find("span")
+
+            if span != -1:
+                diedate = span.next
+                delorean_date = Delorean(dateparser.parse(diedate), timezone='UTC')
+                return delorean_date.datetime.isoformat()
+
+        return None
 
     @staticmethod
     def get_birthplace(soup):
