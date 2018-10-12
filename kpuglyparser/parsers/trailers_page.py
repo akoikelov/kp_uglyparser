@@ -87,20 +87,20 @@ def __get_video_iframe(block: BeautifulSoup):
 
 def __get_links_from_frame_block(frame_block__block):
     frame_block, block = frame_block__block
-    player_div = frame_block.find("div", attrs={
-        'id': 'player'
-    })
-    player_div_json = player_div.attrs['data-params']
-    player_data = json.loads(player_div_json)
-    try:
-        video_url = player_data.get('html5').get('mp4').get('videoUrl')
-        block.data['links'] = [{
-            'quality': 720,
-            'url': video_url
-        }]
-    except BaseException as error:
-        block.data['links'] = []
-        pass
+    # player_div = frame_block__block.find("div", attrs={
+    #     'id': 'player'
+    # })
+    # player_div_json = player_div.attrs['data-params']
+    # player_data = json.loads(player_div_json)
+    # try:
+    #     video_url = player_data.get('html5').get('mp4').get('videoUrl')
+    #     block.data['links'] = [{
+    #         'quality': 720,
+    #         'url': video_url
+    #     }]
+    # except BaseException as error:
+    #     block.data['links'] = []
+    #     pass
     return block
 
 
@@ -140,7 +140,7 @@ def __separate_data(block: BeautifulSoup) -> dict:
 
 
 def __filter_empty_links(trailer: dict):
-    return len(trailer['links'])
+    return len(trailer['links']) if 'links' in trailer else 0
 
 
 def parse_trailers(movie_id: int, cachedir, cachetime):
@@ -165,6 +165,6 @@ def parse_trailers(movie_id: int, cachedir, cachetime):
         # to_map(__get_redirect_result),
         # filter
         # to_map(__filter_only_mp4_links),
-        to_filter(__filter_empty_links),
+        # to_filter(__filter_empty_links),
         list
     )(movie_id))
