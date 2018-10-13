@@ -92,15 +92,15 @@ def __get_links_from_frame_block(frame_block__block):
     # })
     # player_div_json = player_div.attrs['data-params']
     # player_data = json.loads(player_div_json)
-    # try:
-    #     video_url = player_data.get('html5').get('mp4').get('videoUrl')
-    #     block.data['links'] = [{
-    #         'quality': 720,
-    #         'url': video_url
-    #     }]
-    # except BaseException as error:
-    #     block.data['links'] = []
-    #     pass
+    try:
+        # video_url = player_data.get('html5').get('mp4').get('videoUrl')
+        block.data['links'] = [{
+            'quality': 720,
+            'url': ''
+        }]
+    except BaseException as error:
+        block.data['links'] = []
+        pass
     return block
 
 
