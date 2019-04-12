@@ -1,3 +1,4 @@
+import random
 import re
 
 import requests
@@ -5,6 +6,14 @@ import json
 
 from kpuglyparser.film import Film
 from .utils.memoize import memoize_fs
+
+PROXIES = ['http://3bNPxH5eI1:cODSo1CIei@91.243.61.152:24145',
+           'http://Zw2nuO81I5:KwuAmOGBTS@37.139.59.237:17179',
+           'http://YeE0q4MQ3Z:DQg1Xc5SCT@185.192.110.248:24902',
+           'http://xJAVOqdUn8:tjIDWKTy5g@195.158.224.246:17778',
+           'http://KUTejf6vDP:BHrOFhU6VC@185.66.12.105:25240',
+           'http://WGlTsEvVhe:OipX8VLGAd@185.194.105.231:20335',
+           ]
 
 
 def _format_item(result_item):
@@ -26,9 +35,14 @@ def search_movie(q, cachedir=False, cachetime=3600 * 24):
     :param q:
     :return:
     """
-    @memoize_fs(cachedir, "search_movie", cachetime)
+
+    # @memoize_fs(cachedir, "search_movie", cachetime)
     def search(q):
-        resp = requests.get('https://suggest-kinopoisk.yandex.net/suggest-kinopoisk?srv=kinopoisk&part={search}'.format(search=q))
+        resp = requests.get(
+            'https://suggest-kinopoisk.yandex.net/suggest-kinopoisk?srv=kinopoisk&part={search}'.format(search=q),
+            proxies={
+                'http': random.choice(PROXIES)
+            })
         if resp.status_code == 200:
             _json = json.loads(resp.text)
             items = []
