@@ -374,7 +374,10 @@ class MainPageParser():
             date = premiere_BluRay_marker_td.find(
                 string=re.compile(r'\d+\s.+\s\d\d\d\d'))
             if date:
-                self.premiere_BluRay = dateparser.parse(date).isoformat()
+                parsed_date = dateparser.parse(date)
+
+                if parsed_date:
+                    self.premiere_BluRay = parsed_date.isoformat()
 
     def get_runtime(self):
         runtime_marker_td = self.info_table.find('td', id='runtime')
