@@ -361,7 +361,10 @@ class MainPageParser():
             date = premiere_DVD_marker_td.find(
                 string=re.compile(r'\d+\s.+\s\d\d\d\d'))
             if date:
-                self.premiere_DVD = dateparser.parse(date).isoformat()
+                parsed_date = dateparser.parse(date)
+
+                if parsed_date:
+                    self.premiere_DVD = parsed_date.isoformat()
 
     # noinspection PyPep8Naming
     def get_premiere_BluRay(self):
