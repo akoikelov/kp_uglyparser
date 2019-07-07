@@ -24,7 +24,7 @@ FUNC_NAME = 'get_page'
 def get_grab(proxy=None, login=None, password=None):
     g = Grab()
     if proxy:
-        g.setup(proxy=proxy, proxy_type='socks5',
+        g.setup(proxy=proxy, proxy_type='http',
                 connect_timeout=10, timeout=10)
     if login and password:
         g.setup(proxy_userpwd="{}:{}".format(login, password))
